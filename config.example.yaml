@@ -1,0 +1,13 @@
+post_types:
+  default:
+    args:
+  
+  events:
+    args:
+      label: foo
+      labels:
+        label1: bar
+        label2: baz
+
+  custom2:
+    args:
