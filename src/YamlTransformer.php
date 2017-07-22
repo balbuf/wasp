@@ -1,18 +1,18 @@
 <?php
 // register all the transform methods onto here
 
-namespace Oomph\YAWC\YamlTransformer;
+namespace OomphInc\FAST_WP;
 
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
 class YamlTransformer {
 
-	protected $handlers;
+	protected $handlers = [];
 	protected $config_file;
 	protected $raw_yaml;
 
-	public function __construct( ConfigFile $config_file, string $input_file ) {
+	public function __construct(ConfigFile $config_file, $input_file) {
 		$this->config_file = $config_file;
 		$this->raw_yaml = file_get_contents( $input_file );
 		if ( $this->raw_yaml === false ) {
@@ -20,8 +20,8 @@ class YamlTransformer {
 		}
 	}
 
-	public function add_handler( string $property, callable $handler ) {
-		$this->handlers[$property] = $handler;
+	public function add_handler($property, $identifier, callable $handler) {
+		$this->handlers[$identifier][$property] = $handler;
 	}
 
 	protected function parse( $input_file ) {

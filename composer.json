@@ -1,5 +1,5 @@
 {
-	"name": "oomphinc/YAWC",
+	"name": "oomphinc/FAST_WP",
 	"description": "Composer script to create declarative PHP for WordPress from a YAML file",
 	"homepage": "https://www.oomphinc.com/",
 	"license": "MIT",
@@ -17,10 +17,10 @@
 		"symfony/yaml": "^3.3"
 	},
 	"bin": [
-		"bin/generate.php"
+		"bin/generate"
 	],
 	"autoload": {
-		"psr-4": {"Oomph\\YAWC\\": "src/"}
+		"psr-4": {"OomphInc\\FAST_WP\\": "src/"}
 	}
 
 }

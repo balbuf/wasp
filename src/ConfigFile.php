@@ -1,8 +1,6 @@
 <?php
 
-namespace Oomph\YAWC\ConfigFile;
-
-use Oomph\YAWC\ExpressionInterface;
+namespace OomphInc\FAST_WP;
 
 class ConfigFile {
 
@@ -16,14 +14,14 @@ class ConfigFile {
 		$this->config_file = $config_file;
 	}
 	//hook to place this code inside of a particular action, optional priority for that action
-	public function add_action_hook_expression( ExpressionInterface $exp, string $hook, int $priority = 10, bool $lazy = false) {
+	public function add_action_hook_expression(ExpressionInterface $exp, $hook = null, $priority = 10, $lazy = false) {
 		if ( $lazy ) {
 			$this->config['lazy_expressions'][$hook][$priority][] = $exp;
 		} else {
 			$this->config['expressions'][$hook][$priority][] = $exp;
 		}
 	}
-	
+
 	// optional priority to determine order of expression (lower means sooner) (thank goodness for sparse arrays)
 	public function add_bare_expression( ExpressionInterface $exp, int $priority = null ) {
 		if ( $priority === null ) {
@@ -53,7 +51,7 @@ class ConfigFile {
 	public function __toString() {
 		$this->config_string .= array_reduce( $this->config['bare_expressions'], function( $str, $exp ) {
 			return $str .= $exp->compile();
-		}, '' ); 
+		}, '' );
 		$this->compile( 'expressions' );
 		if ( !empty( $this->conditional ) ) {
 			$this->config_string .= "if ( {$this->conditional}() ) {\n";
