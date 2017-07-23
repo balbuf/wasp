@@ -17,11 +17,12 @@ class HookExpression implements CompilableInterface {
 	}
 
 	public function compile($transformer) {
-		return 'add_action( ' . var_export($this->name, true) . ", function() {\n"
-			. implode(array_map(function ($expression) use ($transformer) {
-				return "\t" . $transformer->compile($expression);
-			}, $this->expressions))
-			. "\n}, " . var_export($this->priority, true) . ', ' . (int) $this->num_args . " );\n";
+		return (new FunctionExpression('add_action', [
+			$this->name,
+			new BlockExpression('function', new RawExpression, $this->expressions),
+			$this->priority,
+			(int) $this->num_args,
+		]))->compile($transformer);
 	}
 
 }

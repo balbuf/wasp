@@ -16,9 +16,8 @@ class BlockExpression implements CompilableInterface {
 
 	public function compile($transformer) {
 		return $this->name . ($this->parenthetical ? ' ( ' . $transformer->compile($this->parenthetical) . ' )' : '')
-			. " {\n" . implode(array_map(function ($expression) use ($transformer) {
-				return "\t" . $transformer->compile($expression);
-			}, $this->expressions)) . "\n}\n";
+			. " {\n" . preg_replace('/^/m', "\t", (new CompositeExpression($this->expressions))->compile($transformer))
+			. "\n}\n";
 	}
 
 }

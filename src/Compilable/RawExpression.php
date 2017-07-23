@@ -6,7 +6,7 @@ class RawExpression implements CompilableInterface {
 
 	public $expression;
 
-	public function __construct($expression) {
+	public function __construct($expression = '') {
 		$this->expression = $expression;
 	}
 
