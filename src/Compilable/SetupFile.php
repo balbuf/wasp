@@ -35,18 +35,18 @@ class SetupFile implements CompilableInterface {
 
 	public function compile($transformer) {
 		// @todo: perhaps grab a template that includes a comment about what the file is
-		$compiled = "<?php\n\n" . $this->regular->compile($transformer);
+		$compiled = ["<?php\n", $this->regular->compile($transformer)];
 
 		if (!empty($this->lazy->expressions)) {
 			$version = (string) $transformer->get_property('version');
 
-			$compiled .= "\n" . (new BlockExpression('if',
+			$compiled[] = (new BlockExpression('if',
 				new CompositeExpression([new FunctionExpression('get_option', ['fast_wp_version'], true), new RawExpression('!=='), $version], ' '),
 				[$this->lazy, new FunctionExpression('update_option', ['fast_wp_version', $version])]
 			))->compile($transformer);
 		}
 
-		return $compiled;
+		return implode("\n", array_filter($compiled));
 	}
 
 }
