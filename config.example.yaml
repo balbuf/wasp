@@ -34,3 +34,6 @@ menu_locations:
   footer: Footer Menu
 
 text_domain: FAST_WP
+
+autoloader:
+  namespace: OomphInc\Project
