@@ -1,36 +1,44 @@
 <?php
-namespace Oomph\YAWC\BasicHandlers;
+namespace OomphInc\FAST_WP;
 
-use Oomph\YAWC\FunctionExpression;
-use Oomph\YAWC\ConfigFile;
+use OomphInc\FAST_WP\Compilable\RawExpression;
+use OomphInc\FAST_WP\Compilable\FunctionExpression;
 
 class BasicHandlers {
 
-	public static function post_types( ConfigFile $config_file, $data ) {
+	public static function post_types($transformer, $data) {
+		$transformer->setup_file->add_lazy_expression(new RawExpression('//foo'));
+	}
+
+	public static function taxonomies($transformer, $data) {
 
 	}
 
-	public static function taxonomies( ConfigFile $config_file, $data ) {
+	public static function site_options($transformer, $data) {
 
 	}
 
-	public static function site_options( ConfigFile $config_file, $data ) {
+	public static function scripts($transformer, $data) {
 
 	}
 
-	public static function scripts( ConfigFile $config_file, $data ) {
+	public static function styles($transformer, $data) {
 
 	}
 
-	public static function styles( ConfigFile $config_file, $data ) {
-
+	public static function image_sizes($transformer, $data) {
+		foreach ($data as $name => $settings) {
+			if (!isset($settings['width'], $settings['height'])) {
+				echo "Error: missing width or height for image size '$name'\n";
+				continue;
+			}
+			$settings += ['crop' => true];
+			$args = [$name, $settings['width'], $settings['height'], $settings['crop']];
+			$transformer->setup_file->add_expression(new FunctionExpression('add_image_size', $args), 'after_setup_theme');
+		}
 	}
 
-	public static function image_sizes( ConfigFile $config_file, $data ) {
-
-	}
-
-	public static function constants( ConfigFile $config_file, $data ) {
+	public static function constants($transformer, $data) {
 
 	}
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace OomphInc\FAST_WP\Expression;
+namespace OomphInc\FAST_WP\Compilable;
 
-class RawExpression implements ExpressionInterface {
+class RawExpression implements CompilableInterface {
 
 	public $expression;
 
@@ -10,7 +10,7 @@ class RawExpression implements ExpressionInterface {
 		$this->expression = $expression;
 	}
 
-	public function compile() {
+	public function compile($transformer) {
 		return (string) $this->expression;
 	}
 
