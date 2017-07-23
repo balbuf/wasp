@@ -8,8 +8,8 @@ class SetupFile implements CompilableInterface {
 	public $lazy;
 
 	public function __construct() {
-		$this->regular = new CompositeExpression([], "\n");
-		$this->lazy = new CompositeExpression([], "\n");
+		$this->regular = new CompositeExpression([], "\n\n");
+		$this->lazy = new CompositeExpression([], "\n\n");
 	}
 
 	//hook to place this code inside of a particular action, optional priority for that action
@@ -40,7 +40,7 @@ class SetupFile implements CompilableInterface {
 		if (!empty($this->lazy->expressions)) {
 			$version = (string) $transformer->get_property('version');
 
-			$compiled .= (new BlockExpression('if',
+			$compiled .= "\n" . (new BlockExpression('if',
 				new CompositeExpression([new FunctionExpression('get_option', ['fast_wp_version'], true), new RawExpression('!=='), $version], ' '),
 				[$this->lazy, new FunctionExpression('update_option', ['fast_wp_version', $version])]
 			))->compile($transformer);

@@ -11,7 +11,7 @@ class Comment implements CompilableInterface {
 	}
 
 	public function compile($transformer) {
-		$comment = (string) $comment;
+		$comment = (string) $this->comment;
 
 		// single line?
 		if (strpos($comment, "\n") === false) {
