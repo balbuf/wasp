@@ -13,6 +13,7 @@ class YamlTransformer {
 	protected $yaml_string;
 	protected $yaml;
 	protected $handlers = [];
+	protected $subscriptions = [];
 	public $setup_file;
 
 	public function __construct($yaml_string) {
@@ -34,6 +35,32 @@ class YamlTransformer {
 		unset($this->handlers[$property][$identifier]);
 	}
 
+	public function subscribe($event, callable $handler) {
+		if (!isset($this->subscriptions[$event])) {
+			$this->subscriptions[$event] = [];
+		} else {
+			// unsubscribe to avoid duplicate handlers
+			$this->unsubscribe($event, $handler);
+		}
+		$this->subscriptions[$event][] = $handler;
+	}
+
+	public function unsubscribe($event, callable $handler) {
+		if (!empty($this->subscriptions[$event])) {
+			$this->subscriptions[$event] = array_diff($this->subscriptions[$event], [$handler]);
+		}
+	}
+
+	public function dispatch($event, $value = null, $data = null) {
+		$event_obj = new Event($this, $event, $value, $data);
+		if (!empty($this->subscriptions[$event])) {
+			foreach ($this->subscriptions[$event] as $handler) {
+				call_user_func($handler, $event_obj);
+			}
+		}
+		return $event_obj;
+	}
+
 	public function get_property($property) {
 		if (isset($this->yaml[$property])) {
 			return $this->yaml[$property];
@@ -45,14 +72,20 @@ class YamlTransformer {
 	}
 
 	public function compile($expression) {
+		$expression = $this->dispatch('pre_compile', $expression)->value;
+
 		if ($expression instanceof CompilableInterface) {
-			return $expression->compile($this);
+			$compiled = $expression->compile($this);
 		} else {
-			return var_export($expression, true);
+			$compiled = var_export($expression, true);
 		}
+
+		return $this->dispatch('post_compile', $compiled, ['expression' => $expression])->value;
 	}
 
 	public function execute() {
+		$this->dispatch('pre_execute');
+
 		foreach ($this->yaml as $property => $data) {
 			if (isset($this->handlers[$property])) {
 				foreach ($this->handlers[$property] as $identifier => $handler) {
@@ -62,7 +95,11 @@ class YamlTransformer {
 				echo "Warning: no handler(s) for property '$property'\n";
 			}
 		}
-		return $this->compile($this->setup_file);
+
+		$compiled = $this->compile($this->setup_file);
+
+		$this->dispatch('post_execute');
+		return $compiled;
 	}
 
 }
