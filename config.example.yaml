@@ -1,4 +1,5 @@
 version: 3.4
+
 post_types:
   default:
     args:
@@ -27,3 +28,9 @@ constants:
 
 site_options:
   blogname: My Blog!!
+
+menu_locations:
+  primary: Primary Menu
+  footer: Footer Menu
+
+text_domain: FAST_WP

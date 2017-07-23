@@ -9,7 +9,7 @@ class TranslatableTextExpression implements CompilableInterface {
 	}
 
 	public function compile($transformer) {
-		$compiled = var_export((string) $text, true);
+		$compiled = var_export((string) $this->text, true);
 		if ($domain = $transformer->get_property('text_domain')) {
 			$compiled = '__( ' . $compiled . ', ' . var_export($domain, true) . ' )';
 		}

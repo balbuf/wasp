@@ -2,6 +2,8 @@
 namespace OomphInc\FAST_WP;
 
 use OomphInc\FAST_WP\Compilable\FunctionExpression;
+use OomphInc\FAST_WP\Compilable\ArrayExpression;
+use OomphInc\FAST_WP\Compilable\TranslatableTextExpression;
 
 class BasicHandlers {
 
@@ -43,6 +45,14 @@ class BasicHandlers {
 		foreach ($data as $constant => $value) {
 			$transformer->setup_file->add_expression(new FunctionExpression('define', [$constant, $value]));
 		}
+	}
+
+	public static function menu_locations($transformer, $data) {
+		$data = array_map(function($label) {
+			return new TranslatableTextExpression($label);
+		}, $data);
+
+		$transformer->setup_file->add_expression(new FunctionExpression('register_nav_menus', [new ArrayExpression($data)]));
 	}
 
 }
