@@ -1,13 +1,12 @@
 <?php
 namespace OomphInc\FAST_WP;
 
-use OomphInc\FAST_WP\Compilable\RawExpression;
 use OomphInc\FAST_WP\Compilable\FunctionExpression;
 
 class BasicHandlers {
 
 	public static function post_types($transformer, $data) {
-		$transformer->setup_file->add_lazy_expression(new RawExpression('//foo'));
+
 	}
 
 	public static function taxonomies($transformer, $data) {
@@ -15,7 +14,9 @@ class BasicHandlers {
 	}
 
 	public static function site_options($transformer, $data) {
-
+		foreach ($data as $option => $value) {
+			$transformer->setup_file->add_lazy_expression(new FunctionExpression('update_option', [$option, $value]));
+		}
 	}
 
 	public static function scripts($transformer, $data) {
@@ -39,7 +40,9 @@ class BasicHandlers {
 	}
 
 	public static function constants($transformer, $data) {
-
+		foreach ($data as $constant => $value) {
+			$transformer->setup_file->add_expression(new FunctionExpression('define', [$constant, $value]));
+		}
 	}
 
 }

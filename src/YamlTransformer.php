@@ -40,6 +40,10 @@ class YamlTransformer {
 		}
 	}
 
+	public function set_property($property, $value) {
+		$this->yaml[$property] = $value;
+	}
+
 	public function compile($expression) {
 		if ($expression instanceof CompilableInterface) {
 			return $expression->compile($this);

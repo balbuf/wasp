@@ -49,9 +49,12 @@ class SetupFile implements CompilableInterface {
 		}
 
 		if (!empty($this->expressions_lazy)) {
-			$compiled .= "if ( get_option( 'fast_wp_version' ) !== " . var_export((string) $transformer->get_property('version'), true) . " ) {\n"
-			. static::compile_expressions($transformer, $this->expressions_lazy) . "}\n";
+			$version = var_export((string) $transformer->get_property('version'), true);
+			$compiled .= "if ( get_option( 'fast_wp_version' ) !== {$version} ) {\n"
+			. static::compile_expressions($transformer, $this->expressions_lazy)
+			. "update_option( 'fast_wp_version', {$version} );\n}\n";
 		}
+
 		return $compiled;
 	}
 

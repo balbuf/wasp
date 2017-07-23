@@ -12,12 +12,18 @@ post_types:
 
   custom2:
     args:
+
 image_sizes:
   hero:
     width: 1000
     height: 300
-    crop: true
   headshot:
     width: 400
     height: 400
     crop: [right, top]
+
+constants:
+  WP_DEBUG: true
+
+site_options:
+  blogname: My Blog!!
