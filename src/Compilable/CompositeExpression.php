@@ -4,10 +4,10 @@ namespace OomphInc\FAST_WP\Compilable;
 
 class CompositeExpression implements CompilableInterface {
 
-	public $expressions = [];
+	public $expressions;
 	public $joiner;
 
-	public function __construct($expressions, $joiner = '') {
+	public function __construct($expressions = [], $joiner = '') {
 		$this->expressions = $expressions;
 		$this->joiner = $joiner;
 	}
