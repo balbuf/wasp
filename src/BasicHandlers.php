@@ -5,10 +5,72 @@ use OomphInc\FAST_WP\Compilable\FunctionExpression;
 use OomphInc\FAST_WP\Compilable\ArrayExpression;
 use OomphInc\FAST_WP\Compilable\TranslatableTextExpression;
 use OomphInc\FAST_WP\Compilable\RawExpression;
+use OomphInc\FAST_WP\Compilable\CompositeExpression;
+
 
 class BasicHandlers {
+	public static function text_domain($transformer, $data) {
+		$transformer->set_property('text_domain', $data);
+	}
 
 	public static function post_types($transformer, $data) {
+		$defaults = [
+			'labels' => [
+				'name' => '%plural%',
+				'all_items' => 'All %plural%',
+				'add_new_item' => 'Add New %singular%',
+				'edit_item' => 'Edit %singular%',
+				'new_item' => 'New %singular%',
+				'view_item' => 'View %singular%',
+				'search_items' => 'Search %plural%',
+				'not_found' => 'No %plural% found',
+			],
+			'show_ui' => true,
+			'public' => true,
+			'has_archive' => true,
+			'show_in_nav_menus' => true,
+			'menu_position' => 20,
+			'map_meta_cap' => true,
+			'supports' => [
+				'title',
+				'editor',
+				'thumbnail',
+			],
+			'hierarchical' => false,
+		];
+		$patterns = ['%singular%', '%plural%'];
+		if (isset($data['default'])) {
+			$defaults = array_merge_recursive($defaults, $data['default']);
+			unset($data['default']);
+		}
+		foreach ($data as $post_type => $args) {
+			if (isset($args['post_type'])) {
+				$post_type = $args['post_type'];
+				unset($args['post_type']);
+			}
+			if (isset($args['label'])) {
+				$plural = $args['label'];
+			} elseif (isset($args['labels']['name'])) {
+				$plural = $args['labels']['name'];
+			} else {
+				$plural = ucwords($post_type);
+				$args['label'] = $plural;
+			}
+			if (!isset($args['labels']['singular_name'])) {
+				if (substr($plural, -1) === 's') {
+					$args['labels']['singular_name'] = substr($plural, 0, -1);
+				} else {
+					echo "Could not determine singular name for $post_type post type. Skipping.\n";
+					continue;
+				}
+			}
+			$args = array_merge_recursive($defaults, $args);
+			$replacements = [$args['labels']['singular_name'], $plural];
+			$args['labels'] = new ArrayExpression(array_map(function($label) {
+				return new TranslatableTextExpression($label);
+			}, str_replace($patterns, $replacements, $args['labels'])));
+			$transformer->setup_file->add_expression(new FunctionExpression('register_post_type', [$post_type, new ArrayExpression($args)]), 'init');
+		}
 
 	}
 
