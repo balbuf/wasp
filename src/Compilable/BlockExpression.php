@@ -15,7 +15,7 @@ class BlockExpression implements CompilableInterface {
 	}
 
 	public function compile($transformer) {
-		return $this->name . ($this->parenthetical !== null ? ' ( ' . $transformer->compile($this->parenthetical) . ' )' : '') . " {\n"
+		return $this->name . ($this->parenthetical !== null ? ' (' . $transformer->compile($this->parenthetical) . ')' : '') . " {\n"
 			. rtrim(preg_replace('/^.+/m', "\t\$0", (new CompositeExpression($this->expressions))->compile($transformer)), "\n")
 			. "\n}\n";
 	}

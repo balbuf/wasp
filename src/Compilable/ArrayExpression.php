@@ -11,9 +11,9 @@ class ArrayExpression implements CompilableInterface {
 	}
 
 	public function compile($transformer) {
-		return '[' . implode(', ', array_map(function($key, $value) use ($transformer) {
-				return var_export($key, true) . ' => ' . $transformer->compile($value);
-			}, array_keys($this->array), $this->array)) . ']';
+		return "[\n" . implode(",\n", array_map(function($key, $value) use ($transformer) {
+				return preg_replace('/^.+/m', "\t\$0", var_export($key, true) . ' => ' . $transformer->compile($value));
+			}, array_keys($this->array), $this->array)) . "\n]";
 	}
 
 }

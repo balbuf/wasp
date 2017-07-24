@@ -15,9 +15,13 @@ class FunctionExpression implements CompilableInterface {
 	}
 
 	public function compile($transformer) {
-		return $this->name . '( ' . implode(', ', array_map(function ($arg) use ($transformer) {
-			return $transformer->compile($arg);
-		}, $this->args)) . ' )' . ($this->inline ? '' : ";\n");
+	$compiled = $this->name . '(';
+		if (!empty($this->args)) {
+			$compiled .= ' ' . implode(', ', array_map(function ($arg) use ($transformer) {
+				return $transformer->compile($arg);
+			}, $this->args)) . ' ';
+		}
+		return $compiled . ')' . ($this->inline ? '' : ";\n");
 	}
 
 }
