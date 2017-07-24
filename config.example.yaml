@@ -1,18 +1,16 @@
 version: 3.4
 
 post_types:
-  default:
-    args:
-
   events:
-    args:
-      label: foo
-      labels:
-        label1: bar
-        label2: baz
+    labels:
+      singular_name: Event
+    taxonomies:
+      - custom_tax1
+      - custom_tax2
 
-  custom2:
-    args:
+  jobs:
+    labels:
+      singular_name: Job
 
 image_sizes:
   hero:
