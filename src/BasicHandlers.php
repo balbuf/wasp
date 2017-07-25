@@ -9,8 +9,10 @@ use OomphInc\FAST_WP\Compilable\CompositeExpression;
 
 
 class BasicHandlers {
-	public static function text_domain($transformer, $data) {
-		$transformer->set_property('text_domain', $data);
+	public static function fast_wp($transformer, $data) {
+		foreach ($data as $property => $value) {
+			$transformer->set_property($property, $value);
+		}
 	}
 
 	public static function post_types($transformer, $data) {

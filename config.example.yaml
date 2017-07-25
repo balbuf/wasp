@@ -1,4 +1,7 @@
-version: 3.4
+# For properties that are registered on the transformer
+fast_wp:
+  version: 3.4
+  text_domain: FAST_WP
 
 post_types:
   events:
@@ -30,8 +33,6 @@ site_options:
 menu_locations:
   primary: Primary Menu
   footer: Footer Menu
-
-text_domain: FAST_WP
 
 autoloader:
   namespace: OomphInc\Project
