@@ -1,7 +1,17 @@
 #!/usr/bin/env php
 <?php
 
-require_once __DIR__ . '/../vendor/autoload.php';
+if (!$vendor_dir = getenv('COMPOSER_VENDOR_DIR')) {
+	$vendor_dir = 'vendor';
+}
+
+foreach ([ "/../$vendor_dir/autoload.php", "/$vendor_dir/autoload.php", '/../../autoload.php' ] as $path) {
+	$path = __DIR__ . $path;
+	if (file_exists($path)) {
+		require_once $path;
+		break;
+	}
+}
 
 use OomphInc\FAST_WP\YamlTransformer;
 
