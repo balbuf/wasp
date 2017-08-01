@@ -10,9 +10,6 @@ use OomphInc\FAST_WP\Compilable\CompositeExpression;
 
 class BasicHandlers {
 	public static function fast_wp($transformer, $data) {
-		foreach ($data as $property => $value) {
-			$transformer->set_property($property, $value);
-		}
 	}
 
 	public static function post_types($transformer, $data) {
