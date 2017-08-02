@@ -92,7 +92,7 @@ class YamlTransformer {
 					call_user_func($handler, $this, $data);
 				}
 			} else {
-				echo "Warning: no handler(s) for property '$property'\n";
+				fwrite(STDERR, "Warning: no handler(s) for property '$property'\n");
 			}
 		}
 

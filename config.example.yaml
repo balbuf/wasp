@@ -1,7 +1,5 @@
-# For properties that are registered on the transformer
-fast_wp:
-  version: 3.4
-  text_domain: FAST_WP
+version: 3.4
+text_domain: WASP
 
 post_types:
   events:

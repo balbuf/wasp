@@ -9,9 +9,6 @@ use OomphInc\FAST_WP\Compilable\CompositeExpression;
 
 
 class BasicHandlers {
-	public static function fast_wp($transformer, $data) {
-	}
-
 	public static function post_types($transformer, $data) {
 		$defaults = [
 			'labels' => [
@@ -59,7 +56,7 @@ class BasicHandlers {
 				if (substr($plural, -1) === 's') {
 					$args['labels']['singular_name'] = substr($plural, 0, -1);
 				} else {
-					echo "Could not determine singular name for $post_type post type. Skipping.\n";
+					fwrite(STDERR, "Could not determine singular name for $post_type post type. Skipping.\n");
 					continue;
 				}
 			}
@@ -94,7 +91,7 @@ class BasicHandlers {
 	public static function image_sizes($transformer, $data) {
 		foreach ($data as $name => $settings) {
 			if (!isset($settings['width'], $settings['height'])) {
-				echo "Error: missing width or height for image size '$name'\n";
+				fwrite(STDERR, "Error: missing width or height for image size '$name'\n");
 				continue;
 			}
 			$settings += ['crop' => true];
@@ -119,7 +116,7 @@ class BasicHandlers {
 
 	public static function autoloader($transformer, $data) {
 		if (!isset($data['namespace'])) {
-			echo "Error: no namespace set for autoloader property\n";
+			fwrite(STDERR, "Error: no namespace set for autoloader property\n");
 			return;
 		}
 
