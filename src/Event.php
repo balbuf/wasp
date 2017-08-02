@@ -1,6 +1,6 @@
 <?php
 
-namespace OomphInc\FAST_WP;
+namespace OomphInc\WASP;
 
 class Event {
 

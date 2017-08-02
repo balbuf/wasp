@@ -1,6 +1,6 @@
 <?php
 
-namespace OomphInc\FAST_WP\Compilable;
+namespace OomphInc\WASP\Compilable;
 
 class HookExpression implements CompilableInterface {
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace OomphInc\FAST_WP\Compilable;
+namespace OomphInc\WASP\Compilable;
 
 interface CompilableInterface {
 

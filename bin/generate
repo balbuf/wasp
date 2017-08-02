@@ -1,6 +1,8 @@
 #!/usr/bin/env php
 <?php
 
+use OomphInc\WASP\YamlTransformer;
+
 if (!$vendor_dir = getenv('COMPOSER_VENDOR_DIR')) {
 	$vendor_dir = 'vendor';
 }
@@ -12,8 +14,6 @@ foreach ([ "/../$vendor_dir/autoload.php", "/$vendor_dir/autoload.php", '/../../
 		break;
 	}
 }
-
-use OomphInc\FAST_WP\YamlTransformer;
 
 //get input (or env variables)
 $theme_root = getenv( 'THEME_ROOT' );
@@ -29,8 +29,8 @@ if ($yaml_string === false) {
 
 $transformer = new YamlTransformer($yaml_string);
 
-foreach (get_class_methods('OomphInc\\FAST_WP\\BasicHandlers') as $handler) {
-	$transformer->add_handler($handler, 'fast_wp_' . $handler, ['OomphInc\\FAST_WP\\BasicHandlers', $handler]);
+foreach (get_class_methods('OomphInc\\WASP\\BasicHandlers') as $handler) {
+	$transformer->add_handler($handler, 'wasp_' . $handler, ['OomphInc\\WASP\\BasicHandlers', $handler]);
 }
 
 $compiled = $transformer->execute();

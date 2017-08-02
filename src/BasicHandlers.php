@@ -1,11 +1,11 @@
 <?php
-namespace OomphInc\FAST_WP;
+namespace OomphInc\WASP;
 
-use OomphInc\FAST_WP\Compilable\FunctionExpression;
-use OomphInc\FAST_WP\Compilable\ArrayExpression;
-use OomphInc\FAST_WP\Compilable\TranslatableTextExpression;
-use OomphInc\FAST_WP\Compilable\RawExpression;
-use OomphInc\FAST_WP\Compilable\CompositeExpression;
+use OomphInc\WASP\Compilable\FunctionExpression;
+use OomphInc\WASP\Compilable\ArrayExpression;
+use OomphInc\WASP\Compilable\TranslatableTextExpression;
+use OomphInc\WASP\Compilable\RawExpression;
+use OomphInc\WASP\Compilable\CompositeExpression;
 
 
 class BasicHandlers {

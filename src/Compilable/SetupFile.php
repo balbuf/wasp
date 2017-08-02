@@ -1,6 +1,6 @@
 <?php
 
-namespace OomphInc\FAST_WP\Compilable;
+namespace OomphInc\WASP\Compilable;
 
 class SetupFile implements CompilableInterface {
 
@@ -41,8 +41,8 @@ class SetupFile implements CompilableInterface {
 			$version = (string) $transformer->get_property('version');
 
 			$compiled[] = (new BlockExpression('if',
-				new CompositeExpression([new FunctionExpression('get_option', ['fast_wp_version'], true), new RawExpression('!=='), $version], ' '),
-				[$this->lazy, new FunctionExpression('update_option', ['fast_wp_version', $version])]
+				new CompositeExpression([new FunctionExpression('get_option', ['wasp_version'], true), new RawExpression('!=='), $version], ' '),
+				[$this->lazy, new FunctionExpression('update_option', ['wasp_version', $version])]
 			))->compile($transformer);
 		}
 

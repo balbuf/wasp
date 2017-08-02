@@ -1,12 +1,12 @@
 <?php
 // register all the transform methods onto here
 
-namespace OomphInc\FAST_WP;
+namespace OomphInc\WASP;
 
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
-use OomphInc\FAST_WP\Compilable\SetupFile;
-use OomphInc\FAST_WP\Compilable\CompilableInterface;
+use OomphInc\WASP\Compilable\SetupFile;
+use OomphInc\WASP\Compilable\CompilableInterface;
 
 class YamlTransformer {
 
