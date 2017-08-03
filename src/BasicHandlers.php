@@ -6,6 +6,7 @@ use OomphInc\WASP\Compilable\ArrayExpression;
 use OomphInc\WASP\Compilable\TranslatableTextExpression;
 use OomphInc\WASP\Compilable\RawExpression;
 use OomphInc\WASP\Compilable\CompositeExpression;
+use OomphInc\WASP\Compilable\BlockExpression;
 
 
 class BasicHandlers {
@@ -102,7 +103,7 @@ class BasicHandlers {
 
 	public static function constants($transformer, $data) {
 		foreach ($data as $constant => $value) {
-			$transformer->setup_file->add_expression(new FunctionExpression('define', [$constant, $value]));
+			$transformer->setup_file->add_expression(new BlockExpression('if', new FunctionExpression('!defined', [$constant], true), [new FunctionExpression('define', [$constant, $value])]));
 		}
 	}
 

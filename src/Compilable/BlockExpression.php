@@ -8,7 +8,7 @@ class BlockExpression implements CompilableInterface {
 	public $parenthetical;
 	public $expressions;
 
-	public function __construct($name, $parenthetical = null, $expressions) {
+	public function __construct($name, $parenthetical = null, array $expressions) {
 		$this->name = $name;
 		$this->parenthetical = $parenthetical;
 		$this->expressions = $expressions;
