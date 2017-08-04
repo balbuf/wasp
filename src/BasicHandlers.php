@@ -156,4 +156,17 @@ PHP;
 		$transformer->setup_file->add_expression(new RawExpression($autoloader));
 	}
 
+	public static function theme_supports($transformer, $data) {
+		foreach ($data as $feature) {
+			if ( is_string($feature) ) {
+				$transformer->setup_file->add_expression(new FunctionExpression('add_theme_support', [$feature]), 'after_setup_theme');
+			}
+			if ( is_array($feature) && count($feature) === 1 ) {
+				foreach ($feature as $name => $args) {
+					array_unshift($args, $name);
+					$transformer->setup_file->add_expression(new FunctionExpression('add_theme_support', $args), 'after_setup_theme');
+				}
+			}
+		}
+	}
 }

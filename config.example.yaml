@@ -34,3 +34,9 @@ menu_locations:
 
 autoloader:
   namespace: OomphInc\Project
+
+theme_supports:
+  - post-thumbnails
+  - html5:
+      - [search-form, comment-form, comment-list]
+      - argument 2
