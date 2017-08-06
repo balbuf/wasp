@@ -169,4 +169,18 @@ PHP;
 			}
 		}
 	}
+
+	public static function widget_areas($transformer, $data) {
+		foreach ($data as $id => $args) {
+			if (!isset($args['id'])) {
+				$args['id'] = $id + '-widget;
+			}
+			foreach (['name', 'description'] as $key) {
+				if (isset($args[$key])) {
+					$args[$key] = new TranslatableTextExpression($args[$key]);
+				}
+			}
+			$transformer->setup_file->add_expression(new FunctionExpression('register_sidebar', [new ArrayExpression($args)]), 'widgets_init');
+		}
+	}
 }

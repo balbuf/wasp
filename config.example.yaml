@@ -40,3 +40,9 @@ theme_supports:
   - html5:
       - [search-form, comment-form, comment-list]
       - argument 2
+
+widget_areas:
+  before-footer:
+    name: Before footer
+    before_widget: <div id="%1$s" class="widget %2$s">
+    after_widget: </div>
