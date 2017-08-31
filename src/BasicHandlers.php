@@ -173,7 +173,7 @@ PHP;
 	public static function widget_areas($transformer, $data) {
 		foreach ($data as $id => $args) {
 			if (!isset($args['id'])) {
-				$args['id'] = $id + '-widget;
+				$args['id'] = $id . '-widget';
 			}
 			foreach (['name', 'description'] as $key) {
 				if (isset($args[$key])) {
