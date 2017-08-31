@@ -183,4 +183,14 @@ PHP;
 			$transformer->setup_file->add_expression(new FunctionExpression('register_sidebar', [new ArrayExpression($args)]), 'widgets_init');
 		}
 	}
+
+	// @todo Add file globbing
+	public static function includes($transformer, $data) {
+		$dir = isset($data['dir']) ? '__DIR__' . $data['dir'] : '__DIR__';
+		if (isset($data['files'])) {
+			foreach ($data['files'] as $file) {
+				$transformer->setup_file->add_expression(new RawExpression("require_once '$dir$file';"));
+			}
+		}
+	}
 }

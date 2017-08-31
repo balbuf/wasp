@@ -46,3 +46,9 @@ widget_areas:
     name: Before footer
     before_widget: <div id="%1$s" class="widget %2$s">
     after_widget: </div>
+
+includes:
+  dir: /../inc/ # Optionally specify a directory relative to the directory containing the generated file
+  files:
+    - foo.php
+    - bar.php
