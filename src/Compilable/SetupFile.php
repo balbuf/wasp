@@ -23,7 +23,7 @@ class SetupFile implements CompilableInterface {
 			$index = 'bare';
 			if (!isset($this->$prop->expressions[$index])) {
 				// make sure bare expressions come first
-				$this->$prop->expressions = array_merge([$index => new CompositeExpression], $this->$prop->expressions);
+				$this->$prop->expressions = array_merge([$index => new CompositeExpression([], "\n\n")], $this->$prop->expressions);
 			}
 		}
 		$this->$prop->expressions[$index]->expressions[] = $expression;
