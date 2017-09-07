@@ -186,10 +186,10 @@ PHP;
 
 	// @todo Add file globbing
 	public static function includes($transformer, $data) {
-		$dir = isset($data['dir']) ? '__DIR__' . $data['dir'] : '__DIR__';
+		$dir = isset($data['dir']) ? trim($data['dir'], '/') . '/' : '';
 		if (isset($data['files'])) {
 			foreach ($data['files'] as $file) {
-				$transformer->setup_file->add_expression(new RawExpression("require_once '$dir$file';"));
+				$transformer->setup_file->add_expression(new RawExpression("require_once __DIR__ . '/$dir$file';"));
 			}
 		}
 	}

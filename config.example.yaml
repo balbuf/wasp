@@ -48,7 +48,7 @@ widget_areas:
     after_widget: </div>
 
 includes:
-  dir: /../inc/ # Optionally specify a directory relative to the directory containing the generated file
+  dir: /../inc # Optionally specify a directory relative to the directory containing the generated file
   files:
     - foo.php
     - bar.php
