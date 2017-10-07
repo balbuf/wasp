@@ -115,10 +115,10 @@ class YamlTransformer {
 
 	/**
 	 * Compile a compilable expression.
-	 * @param  CompilableInterface  $expression compilable expression object
+	 * @param  mixed  $expression compilable expression object or any kind of data
 	 * @return string             the compiled expression
 	 */
-	public function compile(CompilableInterface $expression) {
+	public function compile($expression) {
 		$expression = $this->dispatch('pre_compile', $expression)->value;
 
 		if ($expression instanceof CompilableInterface) {

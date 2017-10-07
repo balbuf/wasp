@@ -1,0 +1,20 @@
+#!/usr/bin/env php
+<?php
+
+use Symfony\Component\Console\Application;
+
+$vendor_dir = getenv('WASP_VENDOR_DIR') ?: getenv('COMPOSER_VENDOR_DIR') ?: 'vendor';
+
+// attempt to find the autoload file for this project
+foreach (["/../$vendor_dir/autoload.php", "/$vendor_dir/autoload.php", '/../../../autoload.php'] as $path) {
+	$path = __DIR__ . $path;
+	if (file_exists($path)) {
+		require_once $path;
+		break;
+	}
+}
+
+$application = new Application('wasp', 'beta');
+
+$application->add(new OomphInc\WASP\Command\Generate);
+$application->run();
