@@ -3,10 +3,9 @@
 
 use OomphInc\WASP\YamlTransformer;
 
-if (!$vendor_dir = getenv('COMPOSER_VENDOR_DIR')) {
-	$vendor_dir = 'vendor';
-}
+$vendor_dir = getenv('COMPOSER_VENDOR_DIR') ?: 'vendor';
 
+// attempt to find the autoload file for this project
 foreach ([ "/../$vendor_dir/autoload.php", "/$vendor_dir/autoload.php", '/../../../autoload.php' ] as $path) {
 	$path = __DIR__ . $path;
 	if (file_exists($path)) {
@@ -16,9 +15,9 @@ foreach ([ "/../$vendor_dir/autoload.php", "/$vendor_dir/autoload.php", '/../../
 }
 
 //get input (or env variables)
-$theme_root = getenv( 'THEME_ROOT' );
-$config_input = getenv( 'CONFIG_INPUT' );
-$config_output = getenv( 'CONFIG_OUTPUT' );
+$theme_root = getenv('THEME_ROOT');
+$config_input = getenv('CONFIG_INPUT');
+$config_output = getenv('CONFIG_OUTPUT');
 
 $yaml_string = file_get_contents($config_input);
 
