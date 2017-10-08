@@ -3,16 +3,26 @@
 
 use Symfony\Component\Console\Application;
 
-$vendor_dir = getenv('WASP_VENDOR_DIR') ?: getenv('COMPOSER_VENDOR_DIR') ?: 'vendor';
+// allow an autoloader to be explicitly passed
+if ($autoload = getenv('WASP_AUTOLOAD')) {
+	$paths = [$autoload];
+} else {
+	$vendor_dir = getenv('WASP_VENDOR_DIR') ?: getenv('COMPOSER_VENDOR_DIR') ?: 'vendor';
+	$paths = [__DIR__ . "/../$vendor_dir/autoload.php", __DIR__ . "/$vendor_dir/autoload.php", __DIR__ . '/../../../autoload.php'];
+}
 
 // attempt to find the autoload file for this project
-foreach (["/../$vendor_dir/autoload.php", "/$vendor_dir/autoload.php", '/../../../autoload.php'] as $path) {
-	$path = __DIR__ . $path;
-	if (file_exists($path)) {
-		require_once $path;
-		break;
+do {
+	foreach ($paths as $path) {
+		if (file_exists($path)) {
+			require_once $path;
+			break 2;
+		}
 	}
-}
+	// if we reach this point, we did not find the autoload file
+	echo 'Could not find autoload file';
+	exit(1);
+} while (0);
 
 $application = new Application('wasp', 'beta');
 
