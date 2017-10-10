@@ -15,7 +15,8 @@
 	],
 	"require": {
 		"symfony/yaml": "^3.3",
-		"symfony/console": "^3.3"
+		"symfony/console": "^3.3",
+		"symfony/event-dispatcher": "^3.3"
 	},
 	"bin": [
 		"bin/wasp"

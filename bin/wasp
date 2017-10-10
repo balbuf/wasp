@@ -2,13 +2,20 @@
 <?php
 
 use Symfony\Component\Console\Application;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Logger\ConsoleLogger;
+
+define('WASP_TYPE', 'wasp-plugin');
 
 // allow an autoloader to be explicitly passed
 if ($autoload = getenv('WASP_AUTOLOAD')) {
 	$paths = [$autoload];
 } else {
 	$vendor_dir = getenv('WASP_VENDOR_DIR') ?: getenv('COMPOSER_VENDOR_DIR') ?: 'vendor';
-	$paths = [__DIR__ . "/../$vendor_dir/autoload.php", __DIR__ . "/$vendor_dir/autoload.php", __DIR__ . '/../../../autoload.php'];
+	$paths = [__DIR__ . '/../../../autoload.php', __DIR__ . "/../$vendor_dir/autoload.php", __DIR__ . "/$vendor_dir/autoload.php"];
 }
 
 // attempt to find the autoload file for this project
@@ -16,6 +23,8 @@ do {
 	foreach ($paths as $path) {
 		if (file_exists($path)) {
 			require_once $path;
+			// set the lock file in relation to this
+			$lock_file = dirname($path) . '/../composer.lock';
 			break 2;
 		}
 	}
@@ -25,6 +34,56 @@ do {
 } while (0);
 
 $application = new Application('wasp', 'beta');
+$application->plugins = [];
+$application->services = (object) [
+	'dispatcher' => new EventDispatcher(),
+	'input' => new ArgvInput(),
+	'output' => new ConsoleOutput(),
+];
+$application->setDispatcher($application->services->dispatcher);
+$application->services->logger = new ConsoleLogger($application->services->output);
 
-$application->add(new OomphInc\WASP\Command\Generate);
-$application->run();
+// look for any plugins inside of the lock file
+$lock_file = getenv('WASP_LOCK') ?: $lock_file;
+// do we have one?
+if (file_exists($lock_file)) {
+	$lock = json_decode(file_get_contents($lock_file), true);
+	if (empty($lock)) {
+		$application->services->logger->warning('Could not read lock file');
+	} else {
+		foreach (['packages', 'packages-dev'] as $key) {
+			if (empty($lock[$key]) || !is_array($lock[$key])) {
+				continue;
+			}
+
+			// check each package to see if it is a wasp plugin
+			foreach ($lock[$key] as $package) {
+				if (!isset($package['type']) || $package['type'] !== WASP_TYPE) {
+					continue;
+				}
+
+				// class name is set?
+				if (empty($package['extra']['class'])) {
+					$application->services->logger->warning("Class name for {$package['name']} is not set");
+					continue;
+				}
+
+				if (!class_exists($package['extra']['class'])) {
+					$application->services->logger->warning("Specified class does not exist: {$package['extra']['class']}");
+					continue;
+				}
+
+				// invoke the plugin!
+				$plugin = $application->plugins[] = new $package['extra']['class']($application);
+				if ($plugin instanceof EventSubscriberInterface) {
+					$application->services->dispatcher->addSubscriber($plugin);
+				}
+			}
+		}
+	}
+} else {
+	$application->services->logger->warning('No lock file located');
+}
+
+$application->add(new OomphInc\WASP\Command\Generate());
+$application->run($application->services->input, $application->services->output);

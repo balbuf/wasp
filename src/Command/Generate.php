@@ -12,6 +12,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\GenericEvent;
+use OomphInc\WASP\Events;
 
 class Generate extends Command {
 
@@ -48,11 +50,10 @@ class Generate extends Command {
 			require_once $file;
 		}
 
-		$transformer = new YamlTransformer($yaml_string);
-
-		foreach (get_class_methods('OomphInc\\WASP\\BasicHandlers') as $handler) {
-			$transformer->add_handler($handler, 'wasp_' . $handler, ['OomphInc\\WASP\\BasicHandlers', $handler]);
-		}
+		$transformer = new YamlTransformer($yaml_string, $this->getApplication());
+		$event = new GenericEvent();
+		$event->setArgument('transformer', $transformer);
+		$this->getApplication()->services->dispatcher->dispatch(Events::REGISTER_TRANSFORMS, $event);
 
 		$compiled = $transformer->execute();
 

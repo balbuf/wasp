@@ -1,4 +1,8 @@
-version: 3.4
+about:
+  version: 3.4
+  name: WASP Example
+  dir: inc # location of this file relative to the file root
+
 text_domain: WASP
 
 post_types:
