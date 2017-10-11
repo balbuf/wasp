@@ -103,7 +103,7 @@ class YamlTransformer {
 					call_user_func($handler, $this, $data);
 				}
 			} else {
-				$this->application->services->logger->warning("No handler(s) for property '$property'\n");
+				$this->application->services->logger->warning("No handler(s) for property '$property'");
 			}
 		}
 

@@ -32,6 +32,7 @@ class Generate extends Command {
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$input_file = $input->getArgument('input');
 		$output_file = $input->getArgument('output');
+		$application = $this->getApplication();
 
 		if ($input_file === '-') {
 			$input_file = 'php://stdin';
@@ -40,8 +41,7 @@ class Generate extends Command {
 		$yaml_string = file_get_contents($input_file);
 
 		if ($yaml_string === false) {
-			// @todo log a proper error
-			$output->writeln("Error reading file $input_file");
+			$application->services->logger->error("Error reading file $input_file");
 			exit(1);
 		}
 
@@ -50,10 +50,10 @@ class Generate extends Command {
 			require_once $file;
 		}
 
-		$transformer = new YamlTransformer($yaml_string, $this->getApplication());
+		$transformer = new YamlTransformer($yaml_string, $application);
 		$event = new GenericEvent();
 		$event->setArgument('transformer', $transformer);
-		$this->getApplication()->services->dispatcher->dispatch(Events::REGISTER_TRANSFORMS, $event);
+		$application->services->dispatcher->dispatch(Events::REGISTER_TRANSFORMS, $event);
 
 		$compiled = $transformer->execute();
 
@@ -65,14 +65,16 @@ class Generate extends Command {
 		], $pipes);
 
 		if (is_resource($process)) {
-			fwrite($pipes[0], $compiled.'.');
+			fwrite($pipes[0], $compiled);
 			fclose($pipes[0]);
 			// successful lint?
 			if (proc_close($process) !== 0) {
-				// @todo exit with error - syntax error
+				$application->services->logger->error('Compiled code did not successfully lint');
+				exit(1);
 			}
 		} else {
-			// @todo exit with error - could not lint
+			$application->services->logger->error('Could not open process to lint compiled code');
+			exit(1);
 		}
 
 		if ($output_file === '-') {
