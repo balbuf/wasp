@@ -81,7 +81,9 @@ class Generate extends Command {
 		if ($output_file === '-') {
 			echo $compiled;
 		} else {
-			file_put_contents($output_file, $compiled);
+			if (file_put_contents($output_file, $compiled) === false) {
+				throw new RuntimeException("Could not write to file $output_file");
+			}
 		}
 	}
 }
