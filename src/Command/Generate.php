@@ -25,6 +25,7 @@ class Generate extends Command {
 			->addArgument('output', InputArgument::REQUIRED, 'The output compiled file.')
 			->addOption('root', null, InputOption::VALUE_REQUIRED, 'The file root (default: current working directory).')
 			->addOption('include', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Additional files to include before executing.')
+			->addOption('no-lint', null, InputOption::VALUE_NONE, 'Suppress the linting step after generating the file')
 		;
 	}
 
@@ -56,24 +57,27 @@ class Generate extends Command {
 
 		$compiled = $transformer->execute();
 
-		// open a process to lint the file!
-		$process = proc_open('php -l', [
-			0 => ['pipe', 'r'],
-			1 => ['file', '/dev/null', 'w'], // suppress output
-			2 => ['file', '/dev/null', 'w'],
-		], $pipes);
+		// lint the file!
+		if (!$input->getOption('no-lint')) {
+			// open a process
+			$process = proc_open('php -l', [
+				0 => ['pipe', 'r'],
+				1 => ['file', '/dev/null', 'w'], // suppress output
+				2 => ['file', '/dev/null', 'w'],
+			], $pipes);
 
-		if (is_resource($process)) {
-			fwrite($pipes[0], $compiled);
-			fclose($pipes[0]);
-			// successful lint?
-			if (proc_close($process) !== 0) {
-				$application->services->logger->error('Compiled code did not successfully lint');
+			if (is_resource($process)) {
+				fwrite($pipes[0], $compiled);
+				fclose($pipes[0]);
+				// successful lint?
+				if (proc_close($process) !== 0) {
+					$application->services->logger->error('Compiled code did not successfully lint');
+					exit(1);
+				}
+			} else {
+				$application->services->logger->error('Could not open process to lint compiled code');
 				exit(1);
 			}
-		} else {
-			$application->services->logger->error('Could not open process to lint compiled code');
-			exit(1);
 		}
 
 		if ($output_file === '-') {
