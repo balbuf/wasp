@@ -14,6 +14,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use OomphInc\WASP\Events;
+use RuntimeException;
 
 class Generate extends Command {
 
@@ -41,8 +42,7 @@ class Generate extends Command {
 		$yaml_string = file_get_contents($input_file);
 
 		if ($yaml_string === false) {
-			$application->services->logger->error("Error reading file $input_file");
-			exit(1);
+			throw new RuntimeException("Could not read file $input_file");
 		}
 
 		// optional files to include
@@ -71,12 +71,10 @@ class Generate extends Command {
 				fclose($pipes[0]);
 				// successful lint?
 				if (proc_close($process) !== 0) {
-					$application->services->logger->error('Compiled code did not successfully lint');
-					exit(1);
+					throw new RuntimeException('Compiled code did not successfully lint');
 				}
 			} else {
-				$application->services->logger->error('Could not open process to lint compiled code');
-				exit(1);
+				throw new RuntimeException('Could not open process to lint compiled code');
 			}
 		}
 

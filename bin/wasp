@@ -41,7 +41,10 @@ $application->services = (object) [
 	'output' => new ConsoleOutput(),
 ];
 $application->setDispatcher($application->services->dispatcher);
-$application->services->logger = new ConsoleLogger($application->services->output->getErrorOutput());
+$errOut = $application->services->output->getErrorOutput();
+// default to decoration for the logger (can be disabled with --no-ansi)
+$errOut->setDecorated(true);
+$application->services->logger = new ConsoleLogger($errOut);
 
 // look for any plugins inside of the lock file
 $lock_file = getenv('WASP_LOCK') ?: $lock_file;

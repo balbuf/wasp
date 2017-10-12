@@ -9,6 +9,7 @@ use OomphInc\WASP\Compilable\SetupFile;
 use OomphInc\WASP\Compilable\CompilableInterface;
 use OomphInc\WASP\Events;
 use Symfony\Component\EventDispatcher\GenericEvent;
+use RuntimeException;
 
 class YamlTransformer {
 
@@ -23,12 +24,10 @@ class YamlTransformer {
 	 */
 	public function __construct($yaml_string, $application) {
 		$this->yaml_string = $yaml_string;
-		// try to parse the string
-		try {
-			$this->yaml = Yaml::parse($yaml_string);
-		} catch (ParseException $e) {
-			$application->services->logger->error('Unable to parse the YAML string: ' . $e->getMessage());
-			return;
+		// try to parse the string (will throw an exception on parse error, caught by the application)
+		$this->yaml = Yaml::parse($yaml_string);
+		if (!is_array($this->yaml)) {
+			throw new RuntimeException('Invalid YAML file');
 		}
 		$this->application = $application;
 		$this->setup_file = new SetupFile();
