@@ -25,7 +25,6 @@ class Generate extends Command {
 			->addArgument('output', InputArgument::REQUIRED, 'The output compiled file.')
 			->addOption('root', null, InputOption::VALUE_REQUIRED, 'The file root (default: current working directory).')
 			->addOption('include', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Additional files to include before executing.')
-			->addOption('lock_file', null, InputOption::VALUE_REQUIRED, 'Path to composer.lock file.')
 		;
 	}
 
