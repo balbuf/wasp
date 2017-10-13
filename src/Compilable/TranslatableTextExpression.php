@@ -2,16 +2,14 @@
 
 namespace OomphInc\WASP\Compilable;
 
-class TranslatableTextExpression implements CompilableInterface {
+class TranslatableTextExpression extends BaseCompilable {
 
-	public function __construct($text) {
-		$this->text = $text;
-	}
+	public $text = '';
 
-	public function compile($transformer) {
-		$compiled = var_export((string) $this->text, true);
-		if ($domain = $transformer->get_property('text_domain')) {
-			$compiled = '__( ' . $compiled . ', ' . var_export($domain, true) . ' )';
+	public function compile() {
+		$compiled = $this->transformer->compile((string) $this->text);
+		if ($domain = $this->transformer->getProperty('text_domain')) {
+			$compiled = '__( ' . $compiled . ', ' . $this->transformer->compile($domain) . ' )';
 		}
 		return $compiled;
 	}

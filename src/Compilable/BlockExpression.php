@@ -2,22 +2,17 @@
 
 namespace OomphInc\WASP\Compilable;
 
-class BlockExpression implements CompilableInterface {
+class BlockExpression extends BaseCompilable {
 
 	public $name;
-	public $parenthetical;
-	public $expressions;
+	public $parenthetical = null;
+	public $expressions = [];
+	public $inline = false;
 
-	public function __construct($name, $parenthetical = null, array $expressions) {
-		$this->name = $name;
-		$this->parenthetical = $parenthetical;
-		$this->expressions = $expressions;
-	}
-
-	public function compile($transformer) {
-		return $this->name . ($this->parenthetical !== null ? ' (' . $transformer->compile($this->parenthetical) . ')' : '') . " {\n"
-			. rtrim(preg_replace('/^.+/m', "\t\$0", (new CompositeExpression($this->expressions))->compile($transformer)), "\n")
-			. "\n}\n";
+	public function compile() {
+		return $this->name . ($this->parenthetical !== null ? ' ( ' . $this->transformer->compile($this->parenthetical) . ' )' : '') . " {\n"
+			. rtrim(preg_replace('/^.+/m', "\t\$0", $this->transformer->create('CompositeExpression', ['expressions' => $this->expressions])->compile()), "\n")
+			. "\n}" . ($this->inline ? '' : "\n");
 	}
 
 }

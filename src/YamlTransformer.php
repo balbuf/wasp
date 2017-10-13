@@ -13,24 +13,28 @@ use RuntimeException;
 
 class YamlTransformer {
 
-	protected $yaml_string;
+	protected $yamlString;
 	protected $yaml;
 	protected $handlers = [];
+	protected $classes = [];
 	protected $application;
-	public $setup_file;
+	public $setupFile;
 
 	/**
 	 * @param string $yaml_string contents of YAML configuration
 	 */
-	public function __construct($yaml_string, $application) {
-		$this->yaml_string = $yaml_string;
+	public function __construct($yamlString, $application) {
+		$this->yamlString = $yamlString;
 		// try to parse the string (will throw an exception on parse error, caught by the application)
-		$this->yaml = Yaml::parse($yaml_string);
+		$this->yaml = Yaml::parse($yamlString);
 		if (!is_array($this->yaml)) {
 			throw new RuntimeException('Invalid YAML file');
 		}
 		$this->application = $application;
-		$this->setup_file = new SetupFile();
+		$event = new GenericEvent();
+		$event->setArgument('transformer', $this);
+		$application->services->dispatcher->dispatch(Events::PRE_SETUP_FILE, $event);
+		$this->setupFile = $this->create('SetupFile');
 	}
 
 	/**
@@ -39,7 +43,7 @@ class YamlTransformer {
 	 * @param string   $identifier unique identifier for this handler
 	 * @param callable $handler    the handler that will be invoked when the property is encountered
 	 */
-	public function add_handler($property, $identifier, callable $handler) {
+	public function setHandler($property, $identifier, callable $handler) {
 		$this->handlers[$property][$identifier] = $handler;
 	}
 
@@ -48,19 +52,58 @@ class YamlTransformer {
 	 * @param  string $property   YAML property
 	 * @param  string $identifier handler indentifier
 	 */
-	public function remove_handler($property, $identifier) {
+	public function removeHandler($property, $identifier) {
 		unset($this->handlers[$property][$identifier]);
 	}
 
 	/**
-	 * Get the parsed YAML config for the given top-level property, if set.
-	 * @param  string $property property name
+	 * Set or unset a compilable class.
+	 * @param string $name  name used to create a new object of the class
+	 * @param string $class fully qualified class name
+	 */
+	public function setClass($name, $class) {
+		if (!class_exists($class)) {
+			throw new RuntimeException("Class does not exist: $class");
+		}
+		$this->classes[$name] = $class;
+	}
+
+	/**
+	 * Unset a compilable class.
+	 * @param  string $name  name of compilable
+	 */
+	public function removeClass($name) {
+		unset($this->classes[$name]);
+	}
+
+	/**
+	 * Create a new instance of a compilable class.
+	 * @param  string $name name of compilable type
+	 * @return CompilableInterface  instantiated compilable class
+	 */
+	public function create($name, $args = []) {
+		$class = isset($this->classes[$name]) ? $this->classes[$name] : __NAMESPACE__ . "\\Compilable\\$name";
+		if (class_exists($class)) {
+			return new $class($this, $args);
+		}
+		throw new RuntimeException("No class exists for '$name'");
+	}
+
+	/**
+	 * Get the parsed YAML config for the given property chain, if set.
+	 * @param  string [$property...] property name
 	 * @return mixed            config value, if set
 	 */
-	public function get_property($property) {
-		if (isset($this->yaml[$property])) {
-			return $this->yaml[$property];
+	public function getProperty() {
+		$value = $this->yaml;
+		foreach (func_get_args() as $key) {
+			if (is_array($value) && isset($value[$key])) {
+				$value = $value[$key];
+			} else {
+				return;
+			}
 		}
+		return $value;
 	}
 
 	/**
@@ -68,7 +111,7 @@ class YamlTransformer {
 	 * @param string $property property name
 	 * @param mixed  $value    data
 	 */
-	public function set_property($property, $value) {
+	public function setProperty($property, $value) {
 		$this->yaml[$property] = $value;
 	}
 
@@ -81,7 +124,9 @@ class YamlTransformer {
 		$expression = $this->application->services->dispatcher->dispatch(Events::PRE_COMPILE, new GenericEvent($expression))->getSubject();
 
 		if ($expression instanceof CompilableInterface) {
-			$compiled = $expression->compile($this);
+			$compiled = $expression->compile();
+		} else if (is_array($expression)) {
+			$compiled = $this->create('ArrayExpression', ['array' => $expression])->compile();
 		} else {
 			$compiled = var_export($expression, true);
 		}
@@ -106,7 +151,7 @@ class YamlTransformer {
 			}
 		}
 
-		$compiled = $this->compile($this->setup_file);
+		$compiled = $this->compile($this->setupFile);
 
 		$this->application->services->dispatcher->dispatch(Events::POST_TRANSFORM);
 		return $compiled;

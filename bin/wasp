@@ -14,8 +14,8 @@ define('WASP_TYPE', 'wasp-plugin');
 if ($autoload = getenv('WASP_AUTOLOAD')) {
 	$paths = [$autoload];
 } else {
-	$vendor_dir = getenv('WASP_VENDOR_DIR') ?: getenv('COMPOSER_VENDOR_DIR') ?: 'vendor';
-	$paths = [__DIR__ . '/../../../autoload.php', __DIR__ . "/../$vendor_dir/autoload.php", __DIR__ . "/$vendor_dir/autoload.php"];
+	$vendorDir = getenv('WASP_VENDOR_DIR') ?: getenv('COMPOSER_VENDOR_DIR') ?: 'vendor';
+	$paths = [__DIR__ . '/../../../autoload.php', __DIR__ . "/../$vendorDir/autoload.php", __DIR__ . "/$vendorDir/autoload.php"];
 }
 
 // attempt to find the autoload file for this project
@@ -24,7 +24,7 @@ do {
 		if (file_exists($path)) {
 			require_once $path;
 			// set the lock file in relation to this
-			$lock_file = dirname($path) . '/../composer.lock';
+			$lockFile = dirname($path) . '/../composer.lock';
 			break 2;
 		}
 	}
@@ -47,10 +47,10 @@ $errOut->setDecorated(true);
 $application->services->logger = new ConsoleLogger($errOut);
 
 // look for any plugins inside of the lock file
-$lock_file = getenv('WASP_LOCK') ?: $lock_file;
+$lockFile = getenv('WASP_LOCK') ?: $lockFile;
 // do we have one?
-if (file_exists($lock_file)) {
-	$lock = json_decode(file_get_contents($lock_file), true);
+if (file_exists($lockFile)) {
+	$lock = json_decode(file_get_contents($lockFile), true);
 	if (empty($lock)) {
 		$application->services->logger->warning('Could not read lock file');
 	} else {

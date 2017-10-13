@@ -2,27 +2,25 @@
 
 namespace OomphInc\WASP\Compilable;
 
-class HookExpression implements CompilableInterface {
+class HookExpression extends BaseCompilable {
 
 	public $name;
-	public $expressions;
-	public $priority;
-	public $num_args;
+	public $expressions = [];
+	public $priority = 10;
+	public $numArgs = 99;
 
-	public function __construct($name, $expressions = [], $priority = 10, $num_args = 99) {
-		$this->name = $name;
-		$this->expressions = $expressions;
-		$this->priority = $priority;
-		$this->num_args = $num_args;
-	}
-
-	public function compile($transformer) {
-		return (new FunctionExpression('add_action', [
+	public function compile() {
+		return $this->transformer->create('FunctionExpression', ['name' => 'add_action', 'args' => [
 			$this->name,
-			new BlockExpression('function', new RawExpression, $this->expressions),
+			$this->transformer->create('BlockExpression', [
+				'name' => 'function',
+				'parenthetical' => $this->transformer->create('RawExpression'),
+				'expressions' => $this->expressions,
+				'inline' => true,
+			]),
 			$this->priority,
-			(int) $this->num_args,
-		]))->compile($transformer);
+			(int) $this->numArgs,
+		]])->compile();
 	}
 
 }

@@ -2,19 +2,14 @@
 
 namespace OomphInc\WASP\Compilable;
 
-class CompositeExpression implements CompilableInterface {
+class CompositeExpression extends BaseCompilable {
 
-	public $expressions;
-	public $joiner;
+	public $expressions = [];
+	public $joiner = '';
 
-	public function __construct($expressions = [], $joiner = '') {
-		$this->expressions = $expressions;
-		$this->joiner = $joiner;
-	}
-
-	public function compile($transformer) {
-		return implode($this->joiner, array_map(function ($expression) use ($transformer) {
-				return $transformer->compile($expression);
+	public function compile() {
+		return implode($this->joiner, array_map(function ($expression) {
+				return $this->transformer->compile($expression);
 			}, $this->expressions));
 	}
 

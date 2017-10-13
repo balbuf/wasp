@@ -31,18 +31,18 @@ class Generate extends Command {
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output) {
-		$input_file = $input->getArgument('input');
-		$output_file = $input->getArgument('output');
+		$inputFile = $input->getArgument('input');
+		$outputFile = $input->getArgument('output');
 		$application = $this->getApplication();
 
-		if ($input_file === '-') {
-			$input_file = 'php://stdin';
+		if ($inputFile === '-') {
+			$inputFile = 'php://stdin';
 		}
 
-		$yaml_string = file_get_contents($input_file);
+		$yamlString = file_get_contents($inputFile);
 
-		if ($yaml_string === false) {
-			throw new RuntimeException("Could not read file $input_file");
+		if ($yamlString === false) {
+			throw new RuntimeException("Could not read file $inputFile");
 		}
 
 		// optional files to include
@@ -50,7 +50,7 @@ class Generate extends Command {
 			require_once $file;
 		}
 
-		$transformer = new YamlTransformer($yaml_string, $application);
+		$transformer = new YamlTransformer($yamlString, $application);
 		$event = new GenericEvent();
 		$event->setArgument('transformer', $transformer);
 		$application->services->dispatcher->dispatch(Events::REGISTER_TRANSFORMS, $event);
@@ -67,7 +67,7 @@ class Generate extends Command {
 			], $pipes);
 
 			if (is_resource($process)) {
-				fwrite($pipes[0], $compiled.'.');
+				fwrite($pipes[0], $compiled);
 				fclose($pipes[0]);
 				$err = stream_get_contents($pipes[2]);
 				fclose($pipes[2]);
@@ -80,11 +80,11 @@ class Generate extends Command {
 			}
 		}
 
-		if ($output_file === '-') {
+		if ($outputFile === '-') {
 			echo $compiled;
 		} else {
-			if (file_put_contents($output_file, $compiled) === false) {
-				throw new RuntimeException("Could not write to file $output_file");
+			if (file_put_contents($outputFile, $compiled) === false) {
+				throw new RuntimeException("Could not write to file $outputFile");
 			}
 		}
 	}
