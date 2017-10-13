@@ -59,18 +59,25 @@ class YamlTransformer {
 	/**
 	 * Set or unset a compilable class.
 	 * @param string $name  name used to create a new object of the class
-	 * @param strinf $class fully qualified class name
+	 * @param string $class fully qualified class name
 	 */
-	public function set_class($name, $class = null) {
-		if ($class) {
-			$this->classes[$name] = $class;
-		} else {
-			unset($this->classes[$name]);
+	public function set_class($name, $class) {
+		if (!class_exists($class)) {
+			throw new RuntimeException("Class does not exist: $class");
 		}
+		$this->classes[$name] = $class;
 	}
 
 	/**
-	 * Create a new compilable class.
+	 * Unset a compilable class.
+	 * @param  string $name  name of compilable
+	 */
+	public function unset_class($name) {
+		unset($this->classes[$name]);
+	}
+
+	/**
+	 * Create a new instance of a compilable class.
 	 * @param  string $name name of compilable type
 	 * @return CompilableInterface  instantiated compilable class
 	 */
