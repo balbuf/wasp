@@ -1,5 +1,5 @@
 {
-	"name": "oomphinc/WASP",
+	"name": "oomphinc/wasp",
 	"description": "Composer script to create declarative PHP for WordPress from a YAML file",
 	"homepage": "https://www.oomphinc.com/",
 	"license": "MIT",
@@ -14,10 +14,13 @@
 		}
 	],
 	"require": {
-		"symfony/yaml": "^3.3"
+		"php": ">=5.4",
+		"symfony/yaml": "^3.3",
+		"symfony/console": "^3.3",
+		"symfony/event-dispatcher": "^3.3"
 	},
 	"bin": [
-		"bin/generate"
+		"bin/wasp"
 	],
 	"autoload": {
 		"psr-4": {"OomphInc\\WASP\\": "src/"}

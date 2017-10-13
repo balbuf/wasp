@@ -38,7 +38,8 @@ class SetupFile implements CompilableInterface {
 		$compiled = ["<?php\n", $this->regular->compile($transformer)];
 
 		if (!empty($this->lazy->expressions)) {
-			$version = (string) $transformer->get_property('version');
+			$about = $transformer->get_property('about');
+			$version = isset($about['version']) ? (string) $about['version'] : '';
 
 			$compiled[] = (new BlockExpression('if',
 				new CompositeExpression([new FunctionExpression('get_option', ['wasp_version'], true), new RawExpression('!=='), $version], ' '),
