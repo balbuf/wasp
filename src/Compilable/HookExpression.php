@@ -7,7 +7,7 @@ class HookExpression extends BaseCompilable {
 	public $name;
 	public $expressions = [];
 	public $priority = 10;
-	public $num_args = 99;
+	public $numArgs = 99;
 
 	public function compile() {
 		return $this->transformer->create('FunctionExpression', ['name' => 'add_action', 'args' => [
@@ -19,7 +19,7 @@ class HookExpression extends BaseCompilable {
 				'inline' => true,
 			]),
 			$this->priority,
-			(int) $this->num_args,
+			(int) $this->numArgs,
 		]])->compile();
 	}
 

@@ -13,20 +13,20 @@ use RuntimeException;
 
 class YamlTransformer {
 
-	protected $yaml_string;
+	protected $yamlString;
 	protected $yaml;
 	protected $handlers = [];
 	protected $classes = [];
 	protected $application;
-	public $setup_file;
+	public $setupFile;
 
 	/**
 	 * @param string $yaml_string contents of YAML configuration
 	 */
-	public function __construct($yaml_string, $application) {
-		$this->yaml_string = $yaml_string;
+	public function __construct($yamlString, $application) {
+		$this->yamlString = $yamlString;
 		// try to parse the string (will throw an exception on parse error, caught by the application)
-		$this->yaml = Yaml::parse($yaml_string);
+		$this->yaml = Yaml::parse($yamlString);
 		if (!is_array($this->yaml)) {
 			throw new RuntimeException('Invalid YAML file');
 		}
@@ -34,7 +34,7 @@ class YamlTransformer {
 		$event = new GenericEvent();
 		$event->setArgument('transformer', $this);
 		$application->services->dispatcher->dispatch(Events::PRE_SETUP_FILE, $event);
-		$this->setup_file = $this->create('SetupFile');
+		$this->setupFile = $this->create('SetupFile');
 	}
 
 	/**
@@ -43,7 +43,7 @@ class YamlTransformer {
 	 * @param string   $identifier unique identifier for this handler
 	 * @param callable $handler    the handler that will be invoked when the property is encountered
 	 */
-	public function add_handler($property, $identifier, callable $handler) {
+	public function setHandler($property, $identifier, callable $handler) {
 		$this->handlers[$property][$identifier] = $handler;
 	}
 
@@ -52,7 +52,7 @@ class YamlTransformer {
 	 * @param  string $property   YAML property
 	 * @param  string $identifier handler indentifier
 	 */
-	public function remove_handler($property, $identifier) {
+	public function removeHandler($property, $identifier) {
 		unset($this->handlers[$property][$identifier]);
 	}
 
@@ -61,7 +61,7 @@ class YamlTransformer {
 	 * @param string $name  name used to create a new object of the class
 	 * @param string $class fully qualified class name
 	 */
-	public function set_class($name, $class) {
+	public function setClass($name, $class) {
 		if (!class_exists($class)) {
 			throw new RuntimeException("Class does not exist: $class");
 		}
@@ -72,7 +72,7 @@ class YamlTransformer {
 	 * Unset a compilable class.
 	 * @param  string $name  name of compilable
 	 */
-	public function unset_class($name) {
+	public function removeClass($name) {
 		unset($this->classes[$name]);
 	}
 
@@ -91,10 +91,10 @@ class YamlTransformer {
 
 	/**
 	 * Get the parsed YAML config for the given property chain, if set.
-	 * @param  string $property property name
+	 * @param  string [$property...] property name
 	 * @return mixed            config value, if set
 	 */
-	public function get_property() {
+	public function getProperty() {
 		$value = $this->yaml;
 		foreach (func_get_args() as $key) {
 			if (is_array($value) && isset($value[$key])) {
@@ -111,7 +111,7 @@ class YamlTransformer {
 	 * @param string $property property name
 	 * @param mixed  $value    data
 	 */
-	public function set_property($property, $value) {
+	public function setProperty($property, $value) {
 		$this->yaml[$property] = $value;
 	}
 
@@ -151,7 +151,7 @@ class YamlTransformer {
 			}
 		}
 
-		$compiled = $this->compile($this->setup_file);
+		$compiled = $this->compile($this->setupFile);
 
 		$this->application->services->dispatcher->dispatch(Events::POST_TRANSFORM);
 		return $compiled;

@@ -21,7 +21,7 @@ class SetupFile implements CompilableInterface {
 	 * @param integer             $priority   priority for hook
 	 * @param string              $prop       property to store expression (regular or lazy)
 	 */
-	public function add_expression(CompilableInterface $expression, $hook = null, $priority = 10, $prop = 'regular') {
+	public function addExpression(CompilableInterface $expression, $hook = null, $priority = 10, $prop = 'regular') {
 		if ($hook) {
 			$index = serialize([$hook, $priority]);
 			if (!isset($this->$prop->expressions[$index])) {
@@ -43,8 +43,8 @@ class SetupFile implements CompilableInterface {
 	 * @param string              $hook       optional hook
 	 * @param integer             $priority   priority for hook
 	 */
-	public function add_lazy_expression(CompilableInterface $expression, $hook = null, $priority = 10) {
-		$this->add_expression($expression, $hook, $priority, 'lazy');
+	public function addLazyExpression(CompilableInterface $expression, $hook = null, $priority = 10) {
+		$this->addExpression($expression, $hook, $priority, 'lazy');
 	}
 
 	public function compile() {
@@ -52,9 +52,9 @@ class SetupFile implements CompilableInterface {
 		$compiled = ["<?php\n", $this->regular->compile()];
 
 		if (!empty($this->lazy->expressions)) {
-			$lazy_compiled = $this->lazy->compile();
-			$hash = md5($lazy_compiled);
-			$option = 'wasp_version_' . $this->transformer->get_property('about', 'name');
+			$lazyCompiled = $this->lazy->compile();
+			$hash = md5($lazyCompiled);
+			$option = 'wasp_version_' . $this->transformer->getProperty('about', 'name');
 
 			$compiled[] = $this->transformer->create('BlockExpression', [
 				'name' => 'if',
@@ -72,7 +72,7 @@ class SetupFile implements CompilableInterface {
 				]),
 				'expressions' => [
 					$this->transformer->create('RawExpression', [
-						'expression' => $lazy_compiled,
+						'expression' => $lazyCompiled,
 					]),
 					$this->transformer->create('FunctionExpression', [
 						'name' => 'update_option',
