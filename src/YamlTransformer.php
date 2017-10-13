@@ -31,7 +31,10 @@ class YamlTransformer {
 			throw new RuntimeException('Invalid YAML file');
 		}
 		$this->application = $application;
-		$this->setup_file = new SetupFile($this);
+		$event = new GenericEvent();
+		$event->setArgument('transformer', $this);
+		$application->services->dispatcher->dispatch(Events::PRE_SETUP_FILE, $event);
+		$this->setup_file = $this->create('SetupFile');
 	}
 
 	/**

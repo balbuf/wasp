@@ -67,7 +67,7 @@ class Generate extends Command {
 			], $pipes);
 
 			if (is_resource($process)) {
-				fwrite($pipes[0], $compiled.'.');
+				fwrite($pipes[0], $compiled);
 				fclose($pipes[0]);
 				$err = stream_get_contents($pipes[2]);
 				fclose($pipes[2]);
