@@ -63,15 +63,17 @@ class Generate extends Command {
 			$process = proc_open('php -l', [
 				0 => ['pipe', 'r'],
 				1 => ['file', '/dev/null', 'w'], // suppress output
-				2 => ['file', '/dev/null', 'w'],
+				2 => ['pipe', 'w'],
 			], $pipes);
 
 			if (is_resource($process)) {
-				fwrite($pipes[0], $compiled);
+				fwrite($pipes[0], $compiled.'.');
 				fclose($pipes[0]);
+				$err = stream_get_contents($pipes[2]);
+				fclose($pipes[2]);
 				// successful lint?
 				if (proc_close($process) !== 0) {
-					throw new RuntimeException('Compiled code did not successfully lint');
+					throw new RuntimeException("Compiled code did not successfully lint:\n\n $err");
 				}
 			} else {
 				throw new RuntimeException('Could not open process to lint compiled code');
