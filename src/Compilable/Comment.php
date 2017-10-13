@@ -2,15 +2,11 @@
 
 namespace OomphInc\WASP\Compilable;
 
-class Comment implements CompilableInterface {
+class Comment extends BaseCompilable {
 
-	public $comment;
+	public $comment = '';
 
-	public function __construct($comment) {
-		$this->comment = $comment;
-	}
-
-	public function compile($transformer) {
+	public function compile() {
 		$comment = (string) $this->comment;
 
 		// single line?

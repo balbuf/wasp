@@ -2,23 +2,17 @@
 
 namespace OomphInc\WASP\Compilable;
 
-class FunctionExpression implements CompilableInterface {
+class FunctionExpression extends BaseCompilable {
 
 	public $name;
-	public $args;
-	public $inline;
+	public $args = [];
+	public $inline = false;
 
-	public function __construct($name, array $args, $inline = false) {
-		$this->name = $name;
-		$this->args = $args;
-		$this->inline = $inline;
-	}
-
-	public function compile($transformer) {
-	$compiled = $this->name . '(';
+	public function compile() {
+		$compiled = $this->name . '(';
 		if (!empty($this->args)) {
-			$compiled .= ' ' . implode(', ', array_map(function ($arg) use ($transformer) {
-				return $transformer->compile($arg);
+			$compiled .= ' ' . implode(', ', array_map(function ($arg) {
+				return $this->transformer->compile($arg);
 			}, $this->args)) . ' ';
 		}
 		return $compiled . ')' . ($this->inline ? '' : ";\n");

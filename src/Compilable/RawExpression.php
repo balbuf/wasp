@@ -2,15 +2,11 @@
 
 namespace OomphInc\WASP\Compilable;
 
-class RawExpression implements CompilableInterface {
+class RawExpression extends BaseCompilable {
 
-	public $expression;
+	public $expression = '';
 
-	public function __construct($expression = '') {
-		$this->expression = $expression;
-	}
-
-	public function compile($transformer) {
+	public function compile() {
 		return (string) $this->expression;
 	}
 

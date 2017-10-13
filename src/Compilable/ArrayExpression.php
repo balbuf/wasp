@@ -2,18 +2,14 @@
 
 namespace OomphInc\WASP\Compilable;
 
-class ArrayExpression implements CompilableInterface {
+class ArrayExpression extends BaseCompilable {
 
-	public $array;
+	public $array = [];
 
-	public function __construct(array $array) {
-		$this->array = $array;
-	}
-
-	public function compile($transformer) {
-		return "[\n" . implode(",\n", array_map(function($key, $value) use ($transformer) {
-				return preg_replace('/^.+/m', "\t\$0", var_export($key, true) . ' => ' . $transformer->compile($value));
-			}, array_keys($this->array), $this->array)) . "\n]";
+	public function compile() {
+		return "[\n" . implode(",\n", array_map(function($key, $value) {
+				return preg_replace('/^.+/m', "\t\$0", var_export($key, true) . ' => ' . $this->transformer->compile($value));
+			}, array_keys($this->array), $this->array)) . ",\n]";
 	}
 
 }

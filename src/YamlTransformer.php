@@ -16,6 +16,7 @@ class YamlTransformer {
 	protected $yaml_string;
 	protected $yaml;
 	protected $handlers = [];
+	protected $classes = [];
 	protected $application;
 	public $setup_file;
 
@@ -30,7 +31,7 @@ class YamlTransformer {
 			throw new RuntimeException('Invalid YAML file');
 		}
 		$this->application = $application;
-		$this->setup_file = new SetupFile();
+		$this->setup_file = new SetupFile($this);
 	}
 
 	/**
@@ -53,14 +54,46 @@ class YamlTransformer {
 	}
 
 	/**
-	 * Get the parsed YAML config for the given top-level property, if set.
+	 * Set or unset a compilable class.
+	 * @param string $name  name used to create a new object of the class
+	 * @param strinf $class fully qualified class name
+	 */
+	public function set_class($name, $class = null) {
+		if ($class) {
+			$this->classes[$name] = $class;
+		} else {
+			unset($this->classes[$name]);
+		}
+	}
+
+	/**
+	 * Create a new compilable class.
+	 * @param  string $name name of compilable type
+	 * @return CompilableInterface  instantiated compilable class
+	 */
+	public function create($name, $args = []) {
+		$class = isset($this->classes[$name]) ? $this->classes[$name] : __NAMESPACE__ . "\\Compilable\\$name";
+		if (class_exists($class)) {
+			return new $class($this, $args);
+		}
+		throw new RuntimeException("No class exists for '$name'");
+	}
+
+	/**
+	 * Get the parsed YAML config for the given property chain, if set.
 	 * @param  string $property property name
 	 * @return mixed            config value, if set
 	 */
-	public function get_property($property) {
-		if (isset($this->yaml[$property])) {
-			return $this->yaml[$property];
+	public function get_property() {
+		$value = $this->yaml;
+		foreach (func_get_args() as $key) {
+			if (is_array($value) && isset($value[$key])) {
+				$value = $value[$key];
+			} else {
+				return;
+			}
 		}
+		return $value;
 	}
 
 	/**
@@ -81,7 +114,9 @@ class YamlTransformer {
 		$expression = $this->application->services->dispatcher->dispatch(Events::PRE_COMPILE, new GenericEvent($expression))->getSubject();
 
 		if ($expression instanceof CompilableInterface) {
-			$compiled = $expression->compile($this);
+			$compiled = $expression->compile();
+		} else if (is_array($expression)) {
+			$compiled = $this->create('ArrayExpression', ['array' => $expression])->compile();
 		} else {
 			$compiled = var_export($expression, true);
 		}
