@@ -57,6 +57,20 @@ class YamlTransformer {
 	}
 
 	/**
+	 * Set handlers based on the public methods of the given class.
+	 * Each method should be named after the top-level property it will handle.
+	 * @param  string|object  $class     class name (for static methods) or instantiated object (for non static)
+	 * @param  string  $prefix           prefix for the handler identifier
+	 * @param  boolean $convertFromCamel whether to convert the method names from camelCase to snake_case
+	 */
+	public function importHandlersFromClass($class, $prefix, $convertFromCamel = true) {
+		foreach (get_class_methods($class) as $method) {
+			$handler = $convertFromCamel ? strtolower(preg_replace('/[A-Z]/', '_$0', $method)) : $method;
+			$this->setHandler($handler, $prefix . $handler, [$class, $method]);
+		}
+	}
+
+	/**
 	 * Set or unset a compilable class.
 	 * @param string $name  name used to create a new object of the class
 	 * @param string $class fully qualified class name
