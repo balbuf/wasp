@@ -15,36 +15,48 @@ class SetupFile implements CompilableInterface {
 	}
 
 	/**
-	 * Add an expression to the setup file, optionally inside of a hook.
+	 * Add an expression to the setup file.
 	 * @param CompilableInterface $expression compilable expression
-	 * @param string              $hook       optional hook
-	 * @param integer             $priority   priority for hook
-	 * @param string              $prop       property to store expression (regular or lazy)
+	 * @param array               $options   additional options to control the placement
 	 */
-	public function addExpression(CompilableInterface $expression, $hook = null, $priority = 10, $prop = 'regular') {
-		if ($hook) {
-			$index = serialize([$hook, $priority]);
-			if (!isset($this->$prop->expressions[$index])) {
-				$this->$prop->expressions[$index] = $this->transformer->create('HookExpression', ['name' => $hook, 'priority' => $priority]);
-			}
-		} else {
-			$index = 'bare';
-			if (!isset($this->$prop->expressions[$index])) {
-				// make sure bare expressions come first
-				$this->$prop->expressions = array_merge([$index => $this->transformer->create('CompositeExpression', ['joiner' => "\n\n"])], $this->$prop->expressions);
-			}
-		}
-		$this->$prop->expressions[$index]->expressions[] = $expression;
-	}
+	public function addExpression(CompilableInterface $expression, $options = []) {
+		// default options
+		$options += [
+			'hook' => null,
+			'lazy' => false,
+		];
+		$prop = $options['lazy'] ? 'lazy' : 'regular';
 
-	/**
-	 * Add an expression to the setup file, that only runs upon a setup file change, optionally inside of a hook.
-	 * @param CompilableInterface $expression compilable expression
-	 * @param string              $hook       optional hook
-	 * @param integer             $priority   priority for hook
-	 */
-	public function addLazyExpression(CompilableInterface $expression, $hook = null, $priority = 10) {
-		$this->addExpression($expression, $hook, $priority, 'lazy');
+		// place expression inside of a hook
+		if ($hook = $options['hook']) {
+			$priority = isset($options['priority']) ? $options['priority'] : 10;
+			$index = serialize([$hook, $priority]);
+			// create a container for the given hook and priority
+			if (!isset($this->$prop->expressions[$index])) {
+				$this->$prop->expressions[$index] = $this->transformer->create('HookExpression', [
+					'name' => $hook,
+					'priority' => $priority,
+				]);
+			}
+			$this->$prop->expressions[$index]->expressions[] = $expression;
+		} else {
+			$priority = isset($options['priority']) ? $options['priority'] : 100;
+			// create a container for bare expressions
+			if (!isset($this->$prop->expressions['bare'])) {
+				// make sure bare expressions come first
+				$this->$prop->expressions = array_merge(
+					['bare' => $this->transformer->create('CompositeExpression', ['joiner' => "\n\n"])],
+					$this->$prop->expressions
+				);
+			}
+			// create a container for bare expressions of the given priority
+			if (!isset($this->$prop->expressions['bare']->expressions[$priority])) {
+				$this->$prop->expressions['bare']->expressions[$priority] = $this->transformer->create('CompositeExpression', ['joiner' => "\n\n"]);
+				// keep the array sorted by priority
+				ksort($this->$prop->expressions['bare']->expressions, SORT_NUMERIC);
+			}
+			$this->$prop->expressions['bare']->expressions[$priority]->expressions[] = $expression;
+		}
 	}
 
 	public function compile() {
