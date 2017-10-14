@@ -5,8 +5,10 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
+use Symfony\Component\Console\ConsoleEvents;
 
 define('WASP_TYPE', 'wasp-plugin');
 
@@ -88,5 +90,19 @@ if (file_exists($lockFile)) {
 	$application->services->logger->warning('No lock file located');
 }
 
+// add global options
+$application->getDefinition()->addOption(
+	new InputOption('include', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Additional files to include before executing.')
+);
+// process global options before running command
+$application->services->dispatcher->addListener(ConsoleEvents::COMMAND, function ($event) use ($application) {
+	// optional files to include
+	foreach ($application->services->input->getOption('include') as $file) {
+		if (!is_readable($file)) {
+			throw new RuntimeException("File does not exist or is not readable: $file");
+		}
+		require_once $file;
+	}
+});
 $application->add(new OomphInc\WASP\Command\Generate());
 $application->run($application->services->input, $application->services->output);
