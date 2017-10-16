@@ -25,8 +25,8 @@ class Generate extends Command {
 			->addArgument('input', InputArgument::REQUIRED, 'The input YAML file.')
 			->addArgument('output', InputArgument::REQUIRED, 'The output compiled file.')
 			->addOption('root', null, InputOption::VALUE_REQUIRED, 'The file root (default: current working directory).')
-			->addOption('include', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Additional files to include before executing.')
-			->addOption('no-lint', null, InputOption::VALUE_NONE, 'Suppress the linting step after generating the file')
+			->addOption('no-lint', null, InputOption::VALUE_NONE, 'Suppress the linting step after generating the file.')
+			->addOption('skip-handler', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Handlers to disable when generating the file.')
 		;
 	}
 
@@ -45,17 +45,12 @@ class Generate extends Command {
 			throw new RuntimeException("Could not read file $inputFile");
 		}
 
-		// optional files to include
-		foreach ($input->getOption('include') as $file) {
-			require_once $file;
-		}
-
 		$transformer = new YamlTransformer($yamlString, $application);
 		$event = new GenericEvent();
 		$event->setArgument('transformer', $transformer);
 		$application->services->dispatcher->dispatch(Events::REGISTER_TRANSFORMS, $event);
 
-		$compiled = $transformer->execute();
+		$compiled = $transformer->execute($input->getOption('skip-handler'));
 
 		// lint the file!
 		if (!$input->getOption('no-lint')) {

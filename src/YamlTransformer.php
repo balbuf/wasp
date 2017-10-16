@@ -150,14 +150,20 @@ class YamlTransformer {
 
 	/**
 	 * Process the configuration file, calling all transform handlers.
+	 * @param  array  $disabledHandlers  identifiers of handlers to disable
 	 * @return string  compiled file
 	 */
-	public function execute() {
+	public function execute(array $disabledHandlers = []) {
 		$this->application->services->dispatcher->dispatch(Events::PRE_TRANSFORM);
 
 		foreach ($this->yaml as $property => $data) {
 			if (isset($this->handlers[$property])) {
 				foreach ($this->handlers[$property] as $identifier => $handler) {
+					if (in_array($identifier, $disabledHandlers, true)) {
+						$this->application->services->logger->info("Skipping handler '$identifier'");
+						continue;
+					}
+					$this->application->services->logger->info("Executing handler '$identifier'");
 					call_user_func($handler, $this, $data);
 				}
 			} else {
