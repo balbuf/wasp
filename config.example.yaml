@@ -1,5 +1,4 @@
 about:
-  version: 3.4
   name: WASP Example
   dir: inc # location of this file relative to the file root
 
@@ -52,7 +51,13 @@ widget_areas:
     after_widget: </div>
 
 includes:
-  dir: /../inc # Optionally specify a directory relative to the directory containing the generated file
-  files:
+  use: include
+  files: # relative to file root
     - foo.php
     - bar.php
+    - inc/:
+      - file1.php
+      - file2.php
+      - sub:
+        - file4.php
+  files_match: inc/*.php

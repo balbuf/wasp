@@ -7,6 +7,7 @@
 namespace OomphInc\WASP\Command;
 
 use OomphInc\WASP\YamlTransformer;
+use OomphInc\WASP\FileSystemHelper;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
@@ -24,7 +25,7 @@ class Generate extends Command {
 			->setDescription('Generate a file based off a YAML source.')
 			->addArgument('input', InputArgument::REQUIRED, 'The input YAML file.')
 			->addArgument('output', InputArgument::REQUIRED, 'The output compiled file.')
-			->addOption('root', null, InputOption::VALUE_REQUIRED, 'The file root (default: current working directory).')
+			->addOption('root', null, InputOption::VALUE_REQUIRED, 'The file root (default: discerned from output file path or current working directory).')
 			->addOption('no-lint', null, InputOption::VALUE_NONE, 'Suppress the linting step after generating the file.')
 			->addOption('skip-handler', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Handlers to disable when generating the file.')
 		;
@@ -46,6 +47,23 @@ class Generate extends Command {
 		}
 
 		$transformer = new YamlTransformer($yamlString, $application);
+
+		// resolve the root dir - first by seeing if explictly set
+		if (!($rootDir = $input->getOption('root'))) {
+			// can we discern from the output file path?
+			if ($outputFile !== '-') {
+				// get the setup file relative dir and normalize it
+				$setupFileDir = implode('/', FileSystemHelper::getDirParts($transformer->getProperty('about', 'dir') ?: ''));
+				// strip the setup file relative dir off the end of the output path to determine root dir
+				$rootDir = preg_replace('#' . preg_quote($setupFileDir, '#') . '$#', '', dirname(realpath($outputFile)));
+			// otherwise assume current working directory
+			} else {
+				$rootDir = getcwd();
+			}
+		}
+		$application->services->filesystem = new FileSystemHelper($application, $rootDir);
+
+		// fire off event to register transform handlers
 		$event = new GenericEvent();
 		$event->setArgument('transformer', $transformer);
 		$application->services->dispatcher->dispatch(Events::REGISTER_TRANSFORMS, $event);

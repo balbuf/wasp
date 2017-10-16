@@ -2,14 +2,26 @@
 
 namespace OomphInc\WASP\Compilable;
 
+use RuntimeException;
+use OomphInc\WASP\FileSystemHelper;
+
 class SetupFile implements CompilableInterface {
 
 	protected $transformer;
+	protected $dir;
 	public $regular;
 	public $lazy;
 
 	public function __construct($transformer) {
 		$this->transformer = $transformer;
+
+		// get the setup file dir
+		$this->dir = $transformer->getProperty('about', 'dir') ?: '';
+		// check for upward path component
+		if (in_array('..', FileSystemHelper::getDirParts($this->dir), true)) {
+			throw new RuntimeException('Setup file dir path cannot contain an upward path component "../"');
+		}
+
 		$this->regular = $transformer->create('CompositeExpression', ['joiner' => "\n\n"]);
 		$this->lazy = $transformer->create('CompositeExpression', ['joiner' => "\n\n"]);
 	}
@@ -57,6 +69,15 @@ class SetupFile implements CompilableInterface {
 			}
 			$this->$prop->expressions['bare']->expressions[$priority]->expressions[] = $expression;
 		}
+	}
+
+	/**
+	 * Convert a path that is relative to the file root to one that is relative to the setup file.
+	 * @param  string $path  path relative to file root
+	 * @return string       fully qualified path relative to setup file
+	 */
+	public function convertPath($path) {
+		return '__DIR__ . ' . var_export(FileSystemHelper::relativePath($this->dir, $path), true);
 	}
 
 	public function compile() {

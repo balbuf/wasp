@@ -17,6 +17,7 @@ class YamlTransformer {
 	protected $yaml;
 	protected $handlers = [];
 	protected $classes = [];
+	protected $vars = [];
 	protected $application;
 	public $setupFile;
 
@@ -130,6 +131,26 @@ class YamlTransformer {
 	}
 
 	/**
+	 * Set a variable for use throughout the generation.
+	 * @param string $var   variable name
+	 * @param mixed  $value
+	 */
+	public function setVar($var, $value) {
+		$this->vars[$var] = $value;
+	}
+
+	/**
+	 * Get a variable.
+	 * @param  string $var variable name
+	 * @return mixed       variable value
+	 */
+	public function getVar($var) {
+		if (isset($this->vars[$var])) {
+			return $this->vars[$var];
+		}
+	}
+
+	/**
 	 * Compile a compilable expression.
 	 * @param  mixed  $expression compilable expression object or any kind of data
 	 * @return string             the compiled expression
@@ -164,7 +185,7 @@ class YamlTransformer {
 						continue;
 					}
 					$this->application->services->logger->info("Executing handler '$identifier'");
-					call_user_func($handler, $this, $data);
+					call_user_func($handler, $this, $data, $property);
 				}
 			} else {
 				$this->application->services->logger->notice("No handler(s) for property '$property'");
