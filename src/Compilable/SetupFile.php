@@ -2,49 +2,82 @@
 
 namespace OomphInc\WASP\Compilable;
 
+use RuntimeException;
+use OomphInc\WASP\FileSystemHelper;
+
 class SetupFile implements CompilableInterface {
 
 	protected $transformer;
+	protected $dir;
 	public $regular;
 	public $lazy;
 
 	public function __construct($transformer) {
 		$this->transformer = $transformer;
+
+		// get the setup file dir
+		$this->dir = $transformer->getProperty('about', 'dir') ?: '';
+		// check for upward path component
+		if (in_array('..', FileSystemHelper::getDirParts($this->dir), true)) {
+			throw new RuntimeException('Setup file dir path cannot contain an upward path component "../"');
+		}
+
 		$this->regular = $transformer->create('CompositeExpression', ['joiner' => "\n\n"]);
 		$this->lazy = $transformer->create('CompositeExpression', ['joiner' => "\n\n"]);
 	}
 
 	/**
-	 * Add an expression to the setup file, optionally inside of a hook.
+	 * Add an expression to the setup file.
 	 * @param CompilableInterface $expression compilable expression
-	 * @param string              $hook       optional hook
-	 * @param integer             $priority   priority for hook
-	 * @param string              $prop       property to store expression (regular or lazy)
+	 * @param array               $options   additional options to control the placement
 	 */
-	public function addExpression(CompilableInterface $expression, $hook = null, $priority = 10, $prop = 'regular') {
-		if ($hook) {
+	public function addExpression(CompilableInterface $expression, $options = []) {
+		// default options
+		$options += [
+			'hook' => null,
+			'lazy' => false,
+		];
+		$prop = $options['lazy'] ? 'lazy' : 'regular';
+
+		// place expression inside of a hook
+		if ($hook = $options['hook']) {
+			$priority = isset($options['priority']) ? $options['priority'] : 10;
 			$index = serialize([$hook, $priority]);
+			// create a container for the given hook and priority
 			if (!isset($this->$prop->expressions[$index])) {
-				$this->$prop->expressions[$index] = $this->transformer->create('HookExpression', ['name' => $hook, 'priority' => $priority]);
+				$this->$prop->expressions[$index] = $this->transformer->create('HookExpression', [
+					'name' => $hook,
+					'priority' => $priority,
+				]);
 			}
+			$this->$prop->expressions[$index]->expressions[] = $expression;
 		} else {
-			$index = 'bare';
-			if (!isset($this->$prop->expressions[$index])) {
+			$priority = isset($options['priority']) ? $options['priority'] : 100;
+			// create a container for bare expressions
+			if (!isset($this->$prop->expressions['bare'])) {
 				// make sure bare expressions come first
-				$this->$prop->expressions = array_merge([$index => $this->transformer->create('CompositeExpression', ['joiner' => "\n\n"])], $this->$prop->expressions);
+				$this->$prop->expressions = array_merge(
+					['bare' => $this->transformer->create('CompositeExpression', ['joiner' => "\n\n"])],
+					$this->$prop->expressions
+				);
 			}
+			// create a container for bare expressions of the given priority
+			if (!isset($this->$prop->expressions['bare']->expressions[$priority])) {
+				$this->$prop->expressions['bare']->expressions[$priority] = $this->transformer->create('CompositeExpression', ['joiner' => "\n\n"]);
+				// keep the array sorted by priority
+				ksort($this->$prop->expressions['bare']->expressions, SORT_NUMERIC);
+			}
+			$this->$prop->expressions['bare']->expressions[$priority]->expressions[] = $expression;
 		}
-		$this->$prop->expressions[$index]->expressions[] = $expression;
 	}
 
 	/**
-	 * Add an expression to the setup file, that only runs upon a setup file change, optionally inside of a hook.
-	 * @param CompilableInterface $expression compilable expression
-	 * @param string              $hook       optional hook
-	 * @param integer             $priority   priority for hook
+	 * Convert a path that is relative to the file root to one that is relative to the setup file.
+	 * @param  string $path  path relative to file root
+	 * @return string       fully qualified path relative to setup file
 	 */
-	public function addLazyExpression(CompilableInterface $expression, $hook = null, $priority = 10) {
-		$this->addExpression($expression, $hook, $priority, 'lazy');
+	public function convertPath($path) {
+		return '__DIR__ . ' . var_export(FileSystemHelper::relativePath($this->dir, $path), true);
 	}
 
 	public function compile() {
