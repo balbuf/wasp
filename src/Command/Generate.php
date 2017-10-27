@@ -40,7 +40,7 @@ class Generate extends Command {
 			$inputFile = 'php://stdin';
 		}
 
-		$yamlString = file_get_contents($inputFile);
+		$yamlString = $application->services->filesystem->readFile($inputFile, false);
 
 		if ($yamlString === false) {
 			throw new RuntimeException("Could not read file $inputFile");
@@ -61,7 +61,7 @@ class Generate extends Command {
 				$rootDir = getcwd();
 			}
 		}
-		$application->services->filesystem = new FileSystemHelper($application, $rootDir);
+		$application->services->filesystem->setRootDir($rootDir);
 
 		// fire off event to register transform handlers
 		$event = new GenericEvent();

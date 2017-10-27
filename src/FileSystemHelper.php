@@ -42,8 +42,11 @@ class FileSystemHelper {
 	 * @param  string $path path to file relative to root dir
 	 * @return string       contents of file
 	 */
-	public function readFile($path) {
-		$file = file_get_contents($this->getRootDir() . '/' . $path);
+	public function readFile($path, $relative = true) {
+		if ($relative) {
+			$path = $this->getRootDir() . '/' . $path;
+		}
+		$file = file_get_contents($path);
 		if ($file === false) {
 			throw new RuntimeError("Could not read file '$path'");
 		}

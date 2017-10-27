@@ -8,15 +8,17 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 abstract class App {
 
-	static public function create($input, $output, $logger, $dispatcher = null) {
+	static public function create($input, $output, $logger, $filesystem = null, $dispatcher = null) {
 		$dispatcher = $dispatcher ?: new EventDispatcher();
 		$application = new Application('wasp', 'beta');
+		$filesystem = $filesystem ?: new FileSystemHelper($application, '');
 		$application->plugins = [];
 		$application->services = (object) [
 			'dispatcher' => $dispatcher,
 			'input' => $input,
 			'output' => $output,
 			'logger' => $logger,
+			'filesystem' => $filesystem,
 		];
 		$application->setDispatcher($dispatcher);
 		$application->add(new Command\Generate());
