@@ -2,7 +2,7 @@
 
 namespace OomphInc\WASP;
 
-use RuntimeError;
+use RuntimeException;
 
 class FileSystemHelper {
 
@@ -48,7 +48,7 @@ class FileSystemHelper {
 		}
 		$file = file_get_contents($path);
 		if ($file === false) {
-			throw new RuntimeError("Could not read file '$path'");
+			throw new RuntimeException("Could not read file '$path'");
 		}
 		return $file;
 	}
