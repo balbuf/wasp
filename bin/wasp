@@ -1,9 +1,8 @@
 #!/usr/bin/env php
 <?php
 
-use Symfony\Component\Console\Application;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+namespace OomphInc\WASP;
+
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -35,57 +34,19 @@ do {
 	exit(1);
 } while (0);
 
-$application = new Application('wasp', 'beta');
-$application->plugins = [];
-$application->services = (object) [
-	'dispatcher' => new EventDispatcher(),
-	'input' => new ArgvInput(),
-	'output' => new ConsoleOutput(),
-];
-$application->setDispatcher($application->services->dispatcher);
-$errOut = $application->services->output->getErrorOutput();
+$input = new ArgvInput();
+$output = new ConsoleOutput();
+$errOut = $output->getErrorOutput();
 // default to decoration for the logger (can be disabled with --no-ansi)
 $errOut->setDecorated(true);
-$application->services->logger = new ConsoleLogger($errOut);
+$logger = new ConsoleLogger($errOut);
+$application = App::create($input, $output, $logger);
 
 // look for any plugins inside of the lock file
 $lockFile = getenv('WASP_LOCK') ?: $lockFile;
 // do we have one?
 if (file_exists($lockFile)) {
-	$lock = json_decode(file_get_contents($lockFile), true);
-	if (empty($lock)) {
-		$application->services->logger->warning('Could not read lock file');
-	} else {
-		foreach (['packages', 'packages-dev'] as $key) {
-			if (empty($lock[$key]) || !is_array($lock[$key])) {
-				continue;
-			}
-
-			// check each package to see if it is a wasp plugin
-			foreach ($lock[$key] as $package) {
-				if (!isset($package['type']) || $package['type'] !== WASP_TYPE) {
-					continue;
-				}
-
-				// class name is set?
-				if (empty($package['extra']['class'])) {
-					$application->services->logger->warning("Class name for {$package['name']} is not set");
-					continue;
-				}
-
-				if (!class_exists($package['extra']['class'])) {
-					$application->services->logger->warning("Specified class does not exist: {$package['extra']['class']}");
-					continue;
-				}
-
-				// invoke the plugin!
-				$plugin = $application->plugins[] = new $package['extra']['class']($application);
-				if ($plugin instanceof EventSubscriberInterface) {
-					$application->services->dispatcher->addSubscriber($plugin);
-				}
-			}
-		}
-	}
+	App::setPlugins($application, file_get_contents($lockFile));
 } else {
 	$application->services->logger->warning('No lock file located');
 }
@@ -104,5 +65,5 @@ $application->services->dispatcher->addListener(ConsoleEvents::COMMAND, function
 		require_once $file;
 	}
 });
-$application->add(new OomphInc\WASP\Command\Generate());
-$application->run($application->services->input, $application->services->output);
+
+App::run($application);
