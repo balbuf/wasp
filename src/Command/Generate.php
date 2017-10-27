@@ -96,7 +96,7 @@ class Generate extends Command {
 		if ($outputFile === '-') {
 			echo $compiled;
 		} else {
-			if (file_put_contents($outputFile, $compiled) === false) {
+			if ($application->services->filesystem->writeFile($outputFile, false, $compiled) === false) {
 				throw new RuntimeException("Could not write to file $outputFile");
 			}
 		}

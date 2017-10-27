@@ -53,6 +53,13 @@ class FileSystemHelper {
 		return $file;
 	}
 
+	public function writeFile($path, $relative = true, $contents) {
+		if ($relative) {
+			$path = $this->getRootDir() . '/' . $path;
+		}
+		return file_put_contents($path, $contents);
+	}
+
 	/**
 	 * Recursively flatten a nested files array.
 	 * @param  string $dir   starting dir
