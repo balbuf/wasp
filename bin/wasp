@@ -9,8 +9,6 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\ConsoleEvents;
 
-define('WASP_TYPE', 'wasp-plugin');
-
 // allow an autoloader to be explicitly passed
 if ($autoload = getenv('WASP_AUTOLOAD')) {
 	$paths = [$autoload];
@@ -34,31 +32,33 @@ do {
 	exit(1);
 } while (0);
 
+// create some services
 $input = new ArgvInput();
 $output = new ConsoleOutput();
 $errOut = $output->getErrorOutput();
 // default to decoration for the logger (can be disabled with --no-ansi)
 $errOut->setDecorated(true);
 $logger = new ConsoleLogger($errOut);
-$application = App::create($input, $output, $logger);
+
+$wasp = new Wasp(compact('input', 'output', 'logger'));
 
 // look for any plugins inside of the lock file
 $lockFile = getenv('WASP_LOCK') ?: $lockFile;
 // do we have one?
 if (file_exists($lockFile)) {
-	App::setPlugins($application, file_get_contents($lockFile));
+	$wasp->initializePlugins(file_get_contents($lockFile));
 } else {
-	$application->services->logger->warning('No lock file located');
+	$logger->warning('No lock file located');
 }
 
 // add global options
-$application->getDefinition()->addOption(
+$wasp->getApplication()->getDefinition()->addOption(
 	new InputOption('include', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Additional files to include before executing.')
 );
 // process global options before running command
-$application->services->dispatcher->addListener(ConsoleEvents::COMMAND, function ($event) use ($application) {
+$wasp->getService('dispatcher')->addListener(ConsoleEvents::COMMAND, function ($event) use ($input) {
 	// optional files to include
-	foreach ($application->services->input->getOption('include') as $file) {
+	foreach ($input->getOption('include') as $file) {
 		if (!is_readable($file)) {
 			throw new RuntimeException("File does not exist or is not readable: $file");
 		}
@@ -66,4 +66,4 @@ $application->services->dispatcher->addListener(ConsoleEvents::COMMAND, function
 	}
 });
 
-App::run($application);
+exit($wasp->run());

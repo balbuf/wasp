@@ -3,7 +3,7 @@
 namespace OomphInc\WASP\Compilable;
 
 use RuntimeException;
-use OomphInc\WASP\FileSystemHelper;
+use OomphInc\WASP\FileSystem\FileSystemHelper;
 
 class SetupFile implements CompilableInterface {
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace OomphInc\WASP;
+namespace OomphInc\WASP\Event;
 
 final class Events {
 
@@ -11,6 +11,6 @@ final class Events {
 	const POST_COMPILE = 'wasp_post_compile';
 	const PRE_TRANSFORM = 'wasp_pre_transform';
 	const POST_TRANSFORM = 'wasp_post_transform';
-	const PRE_SETUP_FILE = 'wasp_pre_setup_file';
+	const TRANSFORMER_SETUP = 'wasp_transformer_setup';
 
 }
