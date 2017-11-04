@@ -4,7 +4,9 @@ namespace OomphInc\WASP\FileSystem;
 
 use RuntimeException;
 
-class FileSystem extends AbstractFileSystem {
+class FileSystem implements FileSystemInterface {
+
+	use DirStackTrait;
 
 	/**
 	 * @param string [$cwd] optional starting current working directory
@@ -16,18 +18,17 @@ class FileSystem extends AbstractFileSystem {
 	/**
 	 * @inheritDoc
 	 */
-	public function setCwd($path) {
-		parent::setCwd($path === null ? getcwd() : $path);
-	}
-
-	/**
-	 * @inheritDoc
-	 */
 	public function resolvePath($path) {
+		// default path if null provided
+		if ($path === null) {
+			return getcwd();
+		}
+
 		// is the path relative?
 		if (!preg_match('#^/|[a-z]+://#', $path)) {
 			$path = $this->getCwd() . '/' . $path;
 		}
+
 		return is_readable($path) ? realpath($path) : $path;
 	}
 
