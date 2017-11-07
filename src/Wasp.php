@@ -6,6 +6,11 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\InputDefinition;
+use OomphInc\WASP\Input\PartialInputDefinition;
+use Symfony\Component\Console\ConsoleEvents;
+use Closure;
 
 class Wasp {
 
@@ -17,15 +22,56 @@ class Wasp {
 
 	protected $application;
 	protected $plugins = [];
+	protected $globalInputDefinition;
 
-	public function __construct(array $services = []) {
+	/**
+	 * @param array  $services default services
+	 * @param string $lockFile contents of composer lock file for the project
+	 */
+	public function __construct(array $services = [], $lockFile = null) {
 		$this->handleServiceDefaults($services);
+
+		// create the application
 		$application = new Application(static::NAME, static::VERSION);
+		// add global options
+		$application->getDefinition()->addOptions($this->getGlobalOptions());
+		// add commands
 		$application->add(new Command\Generate($this));
+		// do not auto exit upon command completion
 		$application->setAutoExit(false);
 		$this->setApplication($application);
+
+		// bind input just to global params for early processing
+		$input = $this->getService('input');
+		$input->bind($this->getGlobalInputDefinition());
+		// create a bound closure to call the protected method that sets up output verbosity and format
+		$configureIO = Closure::bind(function($input, $output) {
+			$this->configureIO($input, $output);
+		}, $application, $application);
+		$configureIO($input, $this->getService('output'));
+
+		// optional files to include
+		foreach ($input->getOption('include') as $file) {
+			if (!is_readable($file)) {
+				throw new RuntimeException("File does not exist or is not readable: $file");
+			}
+			require_once $file;
+		}
+
+		// parse lock file and initialize plugins
+		if ($lockFile) {
+			if ($input->getOption('no-plugins')) {
+				$this->getService('logger')->debug('Skipping plugins due to --no-plugins flag');
+			} else {
+				$this->initializePluginsFromLock($lockFile, $input->getOption('disable-plugin'));
+			}
+		}
 	}
 
+	/**
+	 * Get the default types of services that may be accepted.
+	 * @return array [service => class type, ...]
+	 */
 	protected function getDefaultServiceTypes() {
 		return [
 			'input' => 'Symfony\Component\Console\Input\InputInterface',
@@ -38,6 +84,10 @@ class Wasp {
 		];
 	}
 
+	/**
+	 * Get the default service definitions (closures which return an instance of the service).
+	 * @return array [service => closure, ...]
+	 */
 	protected function getDefaultServiceDefinitions() {
 		return [
 			'logger' => function() {
@@ -59,6 +109,46 @@ class Wasp {
 	}
 
 	/**
+	 * Get global options that can apply to any command.
+	 * @return array InputOption and/or InputArgument objects
+	 */
+	protected function getGlobalOptions() {
+		return [
+			new InputOption('include', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Additional files to include before executing.'),
+			new InputOption('disable-plugin', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Plugins to disable when executing commands.'),
+			new InputOption('no-plugins', null, InputOption::VALUE_NONE, 'Disable all plugins when executing command.'),
+		];
+	}
+
+	/**
+	 * Get options that can be supplied for any command.
+	 * @return array option objects
+	 */
+	public function getDefaultGlobalInputDefinition() {
+		// merge application options with global options
+		return new PartialInputDefinition(array_merge($this->getApplication()->getDefinition()->getOptions(), $this->getGlobalOptions()));
+	}
+
+	/**
+	 * Get the global input definition object.
+	 * @return OptionalInputDefinition
+	 */
+	public function getGlobalInputDefinition() {
+		if (!$this->globalInputDefinition) {
+			$this->setGlobalInputDefinition($this->getDefaultGlobalInputDefinition());
+		}
+		return $this->globalInputDefinition;
+	}
+
+	/**
+	 * Set the global input definition object.
+	 * @param OptionalInputDefinition $inputDefinition
+	 */
+	public function setGlobalInputDefinition(InputDefinition $inputDefinition) {
+		$this->globalInputDefinition = $inputDefinition;
+	}
+
+	/**
 	 * Set the console application object.
 	 * @param Application $application application object
 	 */
@@ -76,13 +166,15 @@ class Wasp {
 
 	/**
 	 * Parse lockfile and initialize any wasp plugins.
-	 * @param  string $lock composer lock file
+	 * @param string $lockFile  contents of composer lock file
+	 * @param array  $disabled  slugs of plugins to disable
 	 */
-	public function initializePlugins($lock) {
-		$lock = json_decode($lock, true);
+	protected function initializePluginsFromLock($lockFile, array $disabled = []) {
+		$logger = $this->getService('logger');
+		$lock = json_decode($lockFile, true);
 
 		if (!is_array($lock)) {
-			$this->getService('logger')->warning('Could not read lock file');
+			$logger->warning('Could not parse lock file');
 			return;
 		}
 
@@ -97,14 +189,20 @@ class Wasp {
 					continue;
 				}
 
+				// disable plugin?
+				if (in_array($package['name'], $disabled, true)) {
+					$logger->debug("Plugin '{$package['name']}' is disabled");
+					continue;
+				}
+
 				// class name is set?
 				if (empty($package['extra']['class'])) {
-					$this->getService('logger')->warning("Class name for {$package['name']} is not set");
+					$logger->warning("Class name for {$package['name']} is not set");
 					continue;
 				}
 
 				if (!class_exists($package['extra']['class'])) {
-					$this->getService('logger')->warning("Specified class does not exist: {$package['extra']['class']}");
+					$logger->warning("Specified class does not exist: {$package['extra']['class']}");
 					continue;
 				}
 

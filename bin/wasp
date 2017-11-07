@@ -40,30 +40,18 @@ $errOut = $output->getErrorOutput();
 $errOut->setDecorated(true);
 $logger = new ConsoleLogger($errOut);
 
-$wasp = new Wasp(compact('input', 'output', 'logger'));
-
 // look for any plugins inside of the lock file
 $lockFile = getenv('WASP_LOCK') ?: $lockFile;
 // do we have one?
 if (file_exists($lockFile)) {
-	$wasp->initializePlugins(file_get_contents($lockFile));
+	$lock = file_get_contents($lockFile);
 } else {
 	$logger->warning('No lock file located');
+	$lock = null;
 }
 
-// add global options
-$wasp->getApplication()->getDefinition()->addOption(
-	new InputOption('include', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Additional files to include before executing.')
-);
-// process global options before running command
-$wasp->getService('dispatcher')->addListener(ConsoleEvents::COMMAND, function ($event) use ($input) {
-	// optional files to include
-	foreach ($input->getOption('include') as $file) {
-		if (!is_readable($file)) {
-			throw new RuntimeException("File does not exist or is not readable: $file");
-		}
-		require_once $file;
-	}
-});
+// set up the application
+$wasp = new Wasp(compact('input', 'output', 'logger'), $lock);
 
+// run it!
 exit($wasp->run());
