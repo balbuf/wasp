@@ -10,6 +10,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputDefinition;
 use OomphInc\WASP\Input\PartialInputDefinition;
 use Symfony\Component\Console\ConsoleEvents;
+use OomphInc\WASP\Event\Events;
 use Closure;
 
 class Wasp {
@@ -66,6 +67,8 @@ class Wasp {
 				$this->initializePluginsFromLock($lockFile, $input->getOption('disable-plugin'));
 			}
 		}
+
+		$this->getService('dispatcher')->dispatch(Events::PLUGINS_LOADED);
 	}
 
 	/**
@@ -207,12 +210,20 @@ class Wasp {
 				}
 
 				// invoke the plugin!
-				$plugin = $this->plugins[] = new $package['extra']['class']($this);
+				$plugin = $this->plugins[$package['name']] = new $package['extra']['class']($this);
 				if ($plugin instanceof EventSubscriberInterface) {
 					$this->getService('dispatcher')->addSubscriber($plugin);
 				}
 			}
 		}
+	}
+
+	/**
+	 * Get all instantiated plugins.
+	 * @return array plugin objects
+	 */
+	public function getPlugins() {
+		return $this->plugins;
 	}
 
 	/**
