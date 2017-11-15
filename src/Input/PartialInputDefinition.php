@@ -7,7 +7,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
 /**
- * InputDefinition that only defines a subset of the all the arguments that may be passed,
+ * InputDefinition that only defines a subset of all the arguments that may be passed,
  * i.e. ignores passed options or arguments that do not exist.
  */
 class PartialInputDefinition extends InputDefinition {
