@@ -17,7 +17,7 @@ abstract class FileSystemHelper {
 		$dir = $dir ? rtrim($dir, '/') . '/' : '';
 		foreach ($files as $file) {
 			if (is_string($file)) {
-				$out[] = $dir ? $dir . $file : $file;
+				$out[] = $dir . $file;
 			} else if (is_array($file) && count($file) === 1) {
 				reset($file);
 				$out = array_merge($out, static::flattenFileArray(current($file), $dir . key($file)));
