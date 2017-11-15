@@ -25,7 +25,7 @@ class FileSystem implements FileSystemInterface {
 		}
 
 		// is the path relative?
-		if (!preg_match('#^/|[a-z]+://#', $path)) {
+		if (!preg_match(sprintf('#^%1$s|[a-z]+:%1$s{1,2}#i', preg_quote(DIRECTORY_SEPARATOR)), $path)) {
 			$path = $this->getCwd() . '/' . $path;
 		}
 
@@ -38,9 +38,9 @@ class FileSystem implements FileSystemInterface {
 	public function getFiles($pattern, $relative = true) {
 		$cwd = $this->getCwd();
 		$files = [];
-		foreach (glob($cwd . '/' . $pattern, GLOB_BRACE) as $file) {
+		foreach (glob($cwd . DIRECTORY_SEPARATOR . $pattern, GLOB_BRACE) as $file) {
 			// strip off the files root path
-			$files[] = $relative ? preg_replace('#^' . preg_quote(rtrim($cwd, '/') . '/', '#') . '#', '', $file) : $file;
+			$files[] = $relative ? preg_replace('#^' . preg_quote(rtrim($cwd, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR, '#') . '#', '', $file) : $file;
 		}
 		return $files;
 	}

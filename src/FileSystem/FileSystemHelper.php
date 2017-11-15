@@ -14,7 +14,7 @@ abstract class FileSystemHelper {
 	 */
 	public static function flattenFileArray($files, $dir = null) {
 		$out = [];
-		$dir = $dir ? rtrim($dir, '/') . '/' : '';
+		$dir = $dir ? rtrim($dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR : '';
 		foreach ($files as $file) {
 			if (is_string($file)) {
 				$out[] = $dir . $file;
@@ -41,7 +41,8 @@ abstract class FileSystemHelper {
 			array_shift($dirPartsFrom);
 			array_shift($dirPartsTo);
 		}
-		return '/' . str_repeat('../', count($dirPartsFrom)) . implode('/', $dirPartsTo) . (substr($pathTo, -1) === '/' ? '/' : '');
+		return DIRECTORY_SEPARATOR . str_repeat('..' . DIRECTORY_SEPARATOR, count($dirPartsFrom))
+			. implode(DIRECTORY_SEPARATOR, $dirPartsTo) . (substr($pathTo, -1) === DIRECTORY_SEPARATOR ? DIRECTORY_SEPARATOR : '');
 	}
 
 	/**
@@ -50,7 +51,7 @@ abstract class FileSystemHelper {
 	 * @return array       dirs
 	 */
 	public static function getDirParts($path) {
-		return array_diff(explode('/', $path), ['', '.']);
+		return array_diff(explode(DIRECTORY_SEPARATOR, $path), ['', '.']);
 	}
 
 }
