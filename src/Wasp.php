@@ -81,9 +81,9 @@ class Wasp {
 			'output' => 'Symfony\Component\Console\Output\OutputInterface',
 			'logger' => 'Psr\Log\LoggerInterface',
 			'dispatcher' => 'Symfony\Component\EventDispatcher\EventDispatcherInterface',
-			'filesystem' => __NAMESPACE__ . '\\FileSystem\\FileSystemInterface',
-			'stdin' => __NAMESPACE__ . '\\Input\\StdInInterface',
-			'linter' => __NAMESPACE__ . '\\Linter\\LinterInterface',
+			'filesystem' => __NAMESPACE__ . '\FileSystem\FileSystemInterface',
+			'stdin' => __NAMESPACE__ . '\Input\StdInInterface',
+			'linter' => __NAMESPACE__ . '\Linter\LinterInterface',
 		];
 	}
 
@@ -200,7 +200,7 @@ class Wasp {
 
 				// class name is set?
 				if (empty($package['extra']['class'])) {
-					$logger->warning("Class name for {$package['name']} is not set");
+					$logger->warning("Class name for '{$package['name']}' is not set");
 					continue;
 				}
 
