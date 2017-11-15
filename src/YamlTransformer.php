@@ -7,7 +7,8 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 use OomphInc\WASP\Compilable\SetupFile;
 use OomphInc\WASP\Compilable\CompilableInterface;
-use OomphInc\WASP\Events;
+use OomphInc\WASP\Event\Events;
+use OomphInc\WASP\Event\ValueEvent;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use RuntimeException;
 
@@ -18,24 +19,36 @@ class YamlTransformer {
 	protected $handlers = [];
 	protected $classes = [];
 	protected $vars = [];
-	protected $application;
-	public $setupFile;
+	protected $dispatcher;
+	protected $logger;
+	public $outputExpression;
 
 	/**
 	 * @param string $yaml_string contents of YAML configuration
 	 */
-	public function __construct($yamlString, $application) {
+	public function __construct($yamlString, $dispatcher, $logger) {
+		$this->setYaml($yamlString);
+		$this->dispatcher = $dispatcher;
+		$this->logger = $logger;
+
+		$event = new GenericEvent();
+		$event->setArgument('transformer', $this);
+		$dispatcher->dispatch(Events::TRANSFORMER_SETUP, $event);
+
+		$this->outputExpression = $this->create('SetupFile');
+	}
+
+	/**
+	 * Set the YAML string and parse.
+	 * @param string $yamlString YAML string
+	 */
+	public function setYaml($yamlString) {
 		$this->yamlString = $yamlString;
 		// try to parse the string (will throw an exception on parse error, caught by the application)
 		$this->yaml = Yaml::parse($yamlString);
 		if (!is_array($this->yaml)) {
 			throw new RuntimeException('Invalid YAML file');
 		}
-		$this->application = $application;
-		$event = new GenericEvent();
-		$event->setArgument('transformer', $this);
-		$application->services->dispatcher->dispatch(Events::PRE_SETUP_FILE, $event);
-		$this->setupFile = $this->create('SetupFile');
 	}
 
 	/**
@@ -156,7 +169,7 @@ class YamlTransformer {
 	 * @return string             the compiled expression
 	 */
 	public function compile($expression) {
-		$expression = $this->application->services->dispatcher->dispatch(Events::PRE_COMPILE, new GenericEvent($expression))->getSubject();
+		$expression = $this->dispatcher->dispatch(Events::PRE_COMPILE, new ValueEvent($expression))->getValue();
 
 		if ($expression instanceof CompilableInterface) {
 			$compiled = $expression->compile();
@@ -166,7 +179,7 @@ class YamlTransformer {
 			$compiled = var_export($expression, true);
 		}
 
-		return $this->application->services->dispatcher->dispatch(Events::POST_COMPILE, new GenericEvent($compiled, ['expression' => $expression]))->getSubject();
+		return $this->dispatcher->dispatch(Events::POST_COMPILE, new ValueEvent($compiled, ['expression' => $expression]))->getValue();
 	}
 
 	/**
@@ -175,26 +188,26 @@ class YamlTransformer {
 	 * @return string  compiled file
 	 */
 	public function execute(array $disabledHandlers = []) {
-		$this->application->services->dispatcher->dispatch(Events::PRE_TRANSFORM);
+		$this->dispatcher->dispatch(Events::PRE_TRANSFORM);
 
 		foreach ($this->yaml as $property => $data) {
 			if (isset($this->handlers[$property])) {
 				foreach ($this->handlers[$property] as $identifier => $handler) {
 					if (in_array($identifier, $disabledHandlers, true)) {
-						$this->application->services->logger->info("Skipping handler '$identifier'");
+						$this->logger->info("Skipping handler '$identifier'");
 						continue;
 					}
-					$this->application->services->logger->info("Executing handler '$identifier'");
+					$this->logger->info("Executing handler '$identifier'");
 					call_user_func($handler, $this, $data, $property);
 				}
 			} else {
-				$this->application->services->logger->notice("No handler(s) for property '$property'");
+				$this->logger->notice("No handlers for property '$property'");
 			}
 		}
 
-		$compiled = $this->compile($this->setupFile);
+		$compiled = $this->compile($this->outputExpression);
 
-		$this->application->services->dispatcher->dispatch(Events::POST_TRANSFORM);
+		$this->dispatcher->dispatch(Events::POST_TRANSFORM);
 		return $compiled;
 	}
 
