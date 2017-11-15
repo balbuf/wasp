@@ -64,7 +64,7 @@ interface FileSystemInterface {
 	public function writeFile($path, $contents);
 
 	/**
-	 * Delete a file, if it exists.
+	 * Delete a file or dir (recursively), if it exists.
 	 * @param  string $path  file path
 	 */
 	public function deleteFile($path);
@@ -80,12 +80,6 @@ interface FileSystemInterface {
 	 * Make a new directory, including any intermediate new directories.
 	 * @param  string $path path
 	 */
-	public function mkDir($path);
-
-	/**
-	 * Remove a directory and its contents, if it exists.
-	 * @param  string $path path
-	 */
-	public function rmDir($path);
+	public function createDir($path);
 
 }

@@ -76,10 +76,27 @@ class FileSystem implements FileSystemInterface {
 	 * @inheritDoc
 	 */
 	public function deleteFile($path) {
-		if ($this->fileExists($path)) {
-			if (!unlink($this->resolvePath($path))) {
-				throw new RuntimeException("Could not delete file '$path'");
+		// bail early if it doesn't exit
+		if (!$this->fileExists($path)) {
+			return;
+		}
+
+		// store original path to use in error message, if applicable
+		$origPath = $path;
+		$path = $this->resolvePath($path);
+
+		// is this a dir?
+		if (is_dir($path)) {
+			try {
+				array_walk(array_diff(scandir($path), ['..', '.']), [$this, 'deleteFile']);
+			} catch (RuntimeException $e) {}
+
+			// failure?
+			if (isset($e) || !rmdir($path)) {
+				throw new RuntimeException("Could not delete dir '$origPath'");
 			}
+		} else if (!unlink($path)) {
+			throw new RuntimeException("Could not delete file '$origPath'");
 		}
 	}
 
@@ -97,19 +114,9 @@ class FileSystem implements FileSystemInterface {
 	/**
 	 * @inheritDoc
 	 */
-	public function mkDir($path) {
+	public function createDir($path) {
 		if (!mkdir($this->resolvePath($path), 0777, true)) {
 			throw new RuntimeException("Could not create directory '$path'");
-		}
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function rmDir($path) {
-		exec('rm -rf ' . escapeshellarg($this->resolvePath($path)), $output, $exitCode);
-		if ($exitCode !== 0) {
-			throw new RuntimeException("Could not delete directory '$path'");
 		}
 	}
 
