@@ -26,7 +26,7 @@ class FileSystem implements FileSystemInterface {
 
 		// is the path relative?
 		if (!preg_match(sprintf('#^%1$s|[a-z]+:%1$s{1,2}#i', preg_quote(DIRECTORY_SEPARATOR)), $path)) {
-			$path = $this->getCwd() . '/' . $path;
+			$path = $this->getCwd() . DIRECTORY_SEPARATOR . $path;
 		}
 
 		return is_readable($path) ? realpath($path) : $path;
