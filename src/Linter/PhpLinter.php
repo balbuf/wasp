@@ -8,7 +8,7 @@ class PhpLinter implements LinterInterface {
 		// open a process
 		$process = proc_open('php -l', [
 			0 => ['pipe', 'r'],
-			1 => ['file', '/dev/null', 'w'], // suppress output
+			1 => ['pipe', 'w'],
 			2 => ['pipe', 'w'],
 		], $pipes);
 
@@ -20,6 +20,7 @@ class PhpLinter implements LinterInterface {
 		fclose($pipes[0]);
 		$err = stream_get_contents($pipes[2]);
 		fclose($pipes[2]);
+		fclose($pipes[1]); // close without reading, we don't care about it
 		// successful lint?
 		if (proc_close($process) !== 0) {
 			throw new RuntimeException("Compiled code did not successfully lint:\n\n $err");
