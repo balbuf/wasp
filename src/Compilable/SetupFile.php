@@ -4,6 +4,7 @@ namespace OomphInc\WASP\Compilable;
 
 use RuntimeException;
 use OomphInc\WASP\FileSystem\FileSystemHelper;
+use OomphInc\WASP\Wasp;
 
 class SetupFile implements CompilableInterface {
 
@@ -16,7 +17,7 @@ class SetupFile implements CompilableInterface {
 		$this->transformer = $transformer;
 
 		// get the setup file dir
-		$this->dir = $transformer->getProperty('about', 'dir') ?: '';
+		$this->dir = $transformer->getProperty(Wasp::META_PROPERTY, 'dir') ?: '';
 		// check for upward path component
 		if (in_array('..', FileSystemHelper::getDirParts($this->dir), true)) {
 			throw new RuntimeException('Setup file dir path cannot contain an upward path component "../"');
@@ -87,7 +88,7 @@ class SetupFile implements CompilableInterface {
 		if (!empty($this->lazy->expressions)) {
 			$lazyCompiled = $this->lazy->compile();
 			$hash = md5($lazyCompiled);
-			$option = 'wasp_version_' . $this->transformer->getProperty('about', 'name');
+			$option = 'wasp_version_' . $this->transformer->getProperty(Wasp::META_PROPERTY, 'prefix');
 
 			$compiled[] = $this->transformer->create('BlockExpression', [
 				'name' => 'if',

@@ -16,6 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use OomphInc\WASP\Event\Events;
 use RuntimeException;
+use OomphInc\WASP\Wasp;
 
 class Generate extends Command {
 
@@ -56,7 +57,7 @@ class Generate extends Command {
 			// can we discern from the output file path?
 			if ($outputFile !== '-') {
 				// get the setup file relative dir and normalize it
-				$setupFileDir = implode(DIRECTORY_SEPARATOR, FileSystemHelper::getDirParts($transformer->getProperty('about', 'dir') ?: ''));
+				$setupFileDir = implode(DIRECTORY_SEPARATOR, FileSystemHelper::getDirParts($transformer->getProperty(Wasp::META_PROPERTY, 'dir') ?: ''));
 				// strip the setup file relative dir off the end of the output path to determine root dir
 				$rootDir = preg_replace('#' . preg_quote($setupFileDir, '#') . '$#', '', dirname(realpath($outputFile)));
 			// otherwise assume current working directory
