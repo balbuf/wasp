@@ -20,6 +20,7 @@ class Wasp {
 	const NAME = 'wasp';
 	const VERSION = 'beta';
 	const COMPOSER_TYPE = 'wasp-plugin';
+	const META_PROPERTY = 'wasp'; // top-level property where wasp-related settings are placed
 
 	protected $application;
 	protected $plugins = [];
