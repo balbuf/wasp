@@ -9,6 +9,7 @@ trait ServiceContainerTrait {
 	protected $services = [];
 	protected $serviceTypes = [];
 	protected $serviceDefinitions = [];
+	protected $serviceVars = [];
 
 	/**
 	 * Handle any default values provided by the class definition.
@@ -102,5 +103,23 @@ trait ServiceContainerTrait {
 		} else {
 			throw new \RuntimeException('Requested service does not exist');
 		}
+	}
+
+	/**
+	 * Set a variable for use when creating a service.
+	 * @param string $name  variable name
+	 * @param mixed $value variable value
+	 */
+	public function setServiceVar($name, $value) {
+		$this->serviceVars[$name] = $value;
+	}
+
+	/**
+	 * Get a variable for use when creating a service.
+	 * @param  string $name variable name
+	 * @return mixed       value
+	 */
+	public function getServiceVar($name) {
+		return isset($this->serviceVars[$name]) ? $this->serviceVars[$name] : null;
 	}
 }

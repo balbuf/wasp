@@ -6,7 +6,6 @@
 
 namespace OomphInc\WASP\Command;
 
-use OomphInc\WASP\YamlTransformer;
 use OomphInc\WASP\FileSystem\FileSystemHelper;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -50,7 +49,8 @@ class Generate extends Command {
 			$filesystem->popd();
 		}
 
-		$transformer = new YamlTransformer($yamlString, $this->wasp->getService('dispatcher'), $this->wasp->getService('logger'));
+		$this->wasp->setServiceVar('yaml', $yamlString);
+		$transformer = $this->wasp->getService('transformer');
 
 		// resolve the root dir - first by seeing if explictly set
 		if (!($rootDir = $input->getOption('root'))) {

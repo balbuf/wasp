@@ -109,6 +109,9 @@ class Wasp {
 			'linter' => function() {
 				return new Linter\PhpLinter();
 			},
+			'transformer' => function() {
+				return new YamlTransformer($this->getServiceVar('yaml'), $this->getService('dispatcher'), $this->getService('logger'));
+			},
 		];
 	}
 
