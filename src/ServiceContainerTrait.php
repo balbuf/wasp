@@ -62,7 +62,7 @@ trait ServiceContainerTrait {
 	 * @param Closure $closure closure which returns
 	 */
 	public function setServiceDefinition($service, Closure $closure) {
-		$this->serviceDefinitions[$service] = $closure;
+		$this->serviceDefinitions[$service] = $closure->bindTo($this);
 	}
 
 	/**
@@ -71,7 +71,7 @@ trait ServiceContainerTrait {
 	 */
 	public function getServiceDefinition($service) {
 		if (isset($this->serviceDefinitions[$service])) {
-			return $this->serviceDefinitions[$service]->bindTo($this);
+			return $this->serviceDefinitions[$service];
 		}
 	}
 
