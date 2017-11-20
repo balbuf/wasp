@@ -12,6 +12,8 @@ use OomphInc\WASP\Input\PartialInputDefinition;
 use Symfony\Component\Console\ConsoleEvents;
 use OomphInc\WASP\Event\Events;
 use Closure;
+use Twig_Environment;
+use Twig_Loader_Array;
 
 class Wasp {
 
@@ -85,6 +87,7 @@ class Wasp {
 			'filesystem' => __NAMESPACE__ . '\FileSystem\FileSystemInterface',
 			'stdin' => __NAMESPACE__ . '\Input\StdInInterface',
 			'linter' => __NAMESPACE__ . '\Linter\LinterInterface',
+			'twig' => 'Twig_Environment',
 		];
 	}
 
@@ -111,6 +114,12 @@ class Wasp {
 			},
 			'transformer' => function() {
 				return new YamlTransformer($this->getServiceVar('yaml'), $this->getService('dispatcher'), $this->getService('logger'));
+			},
+			'propertyTree' => function() {
+				return new Property\PropertyTree($this->getService('twig'));
+			},
+			'twig' => function() {
+				return new Twig_Environment(new Twig_Loader_Array(), ['autoescape' => false]);
 			},
 		];
 	}
