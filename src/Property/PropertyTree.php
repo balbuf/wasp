@@ -19,7 +19,7 @@ class PropertyTree {
 	protected $twig;
 	protected $configRaw = []; // raw config as entered
 	protected $config = []; // config processed with defaults
-	protected $defaults = []; // handler-defined defaults
+	protected $defaults = []; // handler-defined defaults - keyed on handler-identifier
 	protected $userDefaults = []; // user-defined defaults
 
 	public function __construct(Twig_Environment $twig) {
@@ -84,6 +84,7 @@ class PropertyTree {
 			array_walk($value, function(&$item, $key) use ($chain) {
 				$item = $this->processValue($item, array_merge($chain, [$key]));
 			});
+		// strings may have twig template components inside
 		} else if (is_string($value)) {
 			// remove last item of the context chain so that "this" actually refers to the parent of this property
 			$siblingChain = array_slice($chain, 0, -1);
