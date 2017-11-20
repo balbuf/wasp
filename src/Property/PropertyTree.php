@@ -33,12 +33,16 @@ class PropertyTree {
 	 * @param  mixed $value  the value to set
 	 */
 	public function set() {
+		// start by getting all args
 		$chain = func_get_args();
+		// value is always the last arg
 		$value = array_pop($chain);
+		// chain may be provided as a single array arg
 		$chain = static::unnestArray($chain);
 		// set the raw values
 		static::setInTree($this->configRaw, $chain, $value);
-		$this->processDefaults($chain);
+		// re-process defaults for the entire top-level property
+		$this->processDefaults(array_slice($chain, 0, 1));
 	}
 
 	/**
@@ -353,7 +357,7 @@ class PropertyTree {
 
 	/**
 	 * Set a value in a multidimensional array at the corresponding property chain.
-	 * @param array  &$tree multidimensial array
+	 * @param array  &$tree multidimensional array
 	 * @param array  $chain property chain
 	 * @param mixed  $value value to set
 	 */
