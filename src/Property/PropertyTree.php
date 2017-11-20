@@ -15,6 +15,7 @@ class PropertyTree {
 	const PROP_ASCEND = 'parent'; // twig pseudo property to ascend up one level in the property chain
 	const PROP_DEFAULT = 'default'; // config property to provide user defaults
 	const PROP_NAME = 'name'; // config property corresponding to key for assoc arrays that contain only assoc arrays
+	const PROP_CHAIN = 'prop'; // twig property to get the property chain
 
 	protected $twig;
 	protected $configRaw = []; // raw config as entered
@@ -88,9 +89,11 @@ class PropertyTree {
 		} else if (is_string($value)) {
 			// remove last item of the context chain so that "this" actually refers to the parent of this property
 			$siblingChain = array_slice($chain, 0, -1);
+			$reverseChain = array_reverse($chain);
 			// process twig template values
 			$value = $this->getTwig()->createTemplate($value)->render([
 				static::PROP_SIBLINGS => new PropertyChain($this, $siblingChain, static::PROP_ASCEND),
+				static::PROP_CHAIN => $reverseChain,
 			] + $this->createGlobalContext());
 
 			// look for a user-defined default property, by replacing this prop's parent's name with "default"
@@ -100,7 +103,7 @@ class PropertyTree {
 			// does a user value exist? if so, check to see if it is self-referential
 			if (is_string($userDefault = $this->getUserDefault($userDefaultChain))) {
 				// starting twig context
-				$context = $this->createGlobalContext();
+				$context = $this->createGlobalContext() + [static::PROP_CHAIN => $reverseChain];
 
 				// is siblings prop named something different than self prop?
 				if (static::PROP_SIBLINGS !== static::PROP_SELF) {
@@ -151,25 +154,52 @@ class PropertyTree {
 
 	/**
 	 * Set the default value for a property.
+	 * @param string $identifier  unique identifier corresponding to handler
 	 * @param string|array [$property...] property chain
 	 * @param  mixed $value  the default value to set
 	 */
 	public function setDefault() {
+		// start by getting all args
 		$chain = func_get_args();
+		// identifier is always the first arg
+		$identifier = array_shift($chain);
+		// value is always the last arg
 		$value = array_pop($chain);
+		// chain may be provided as a single array arg
 		$chain = static::unnestArray($chain);
-		static::setInTree($this->defaults, $chain, $value);
+		// add the identifier to the beginning of the chain and set
+		static::setInTree($this->defaults, array_merge([$identifier], $chain), $value);
 		// re-process defaults for the entire top-level property
 		$this->processDefaults(array_slice($chain, 0, 1));
 	}
 
 	/**
 	 * Get the default at the given property chain, if set.
+	 * @param string $identifier  unique identifier corresponding to handler
 	 * @param  string|array [$property...] property name
 	 * @return mixed            default value, if set
 	 */
 	public function getDefault() {
-		return static::getFromTree($this->defaults, static::unnestArray(func_get_args()));
+		// start with all args
+		$chain = func_get_args();
+		// identifier is always the first arg
+		$identifier = array_shift($chain);
+		// chain may be supplied as a single array arg
+		$chain = static::unnestArray($chain);
+		// add the identifier to the beginning of the chain and get
+		return static::getFromTree($this->defaults, array_merge([$identifier], $chain));
+	}
+
+	/**
+	 * Get all defaults at the given property chain, if set.
+	 * @param  string|array [$property...] property name
+	 * @return mixed            array of default values, if set
+	 */
+	public function getAllDefaults() {
+		$chain = static::unnestArray(func_get_args());
+		return array_map(function($identifier) use ($chain) {
+			return $this->getDefault($identifier, $chain);
+		}, array_keys($this->defaults));
 	}
 
 	/**
@@ -214,7 +244,7 @@ class PropertyTree {
 		// user defaults can have self-referential properties, but remove them as they are handled elsewhere
 		$userDefaults = $this->removeSelfReferentialTemplates($this->getUserDefault($chain));
 		// fill in defaults
-		static::applyDefaults($processed, $userDefaults, $this->getDefault($chain));
+		call_user_func_array([static::class, 'applyDefaults'], array_merge([&$processed, $userDefaults], $this->getAllDefaults($chain)));
 		// set the processed values
 		static::setInTree($this->config, $chain, $processed);
 	}
@@ -388,8 +418,6 @@ class PropertyTree {
 			// do we have any defaults arrays?
 			if (count($defaultsArrs)) {
 				array_walk($value, function(&$item, $key) use ($defaultsArrs) {
-					// add a defaults array to fill in "name" property, using the assoc key
-					$defaultsArrs[] = [static::PROP_NAME => $key];
 					call_user_func_array([static::class, 'applyDefaults'], array_merge([&$item], $defaultsArrs));
 				});
 				// we are done with this one!

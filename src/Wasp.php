@@ -113,7 +113,7 @@ class Wasp {
 				return new Linter\PhpLinter();
 			},
 			'transformer' => function() {
-				return new YamlTransformer($this->getServiceVar('yaml'), $this->getService('dispatcher'), $this->getService('logger'));
+				return new YamlTransformer($this->getServiceVar('yaml'), $this->getService('dispatcher'), $this->getService('logger'), $this->getService('propertyTree'));
 			},
 			'propertyTree' => function() {
 				return new Property\PropertyTree($this->getService('twig'));
