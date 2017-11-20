@@ -95,7 +95,6 @@ class YamlTransformer {
 	 * Remove the transform handler matching the given property and identifier.
 	 * @param  string $property   YAML property
 	 * @param  string $identifier handler indentifier
-	 * @param  bool   $removeDefaults  whether to remove any associated defaults
 	 */
 	public function removeHandler($property, $identifier) {
 		unset($this->handlers[$property][$identifier]);
