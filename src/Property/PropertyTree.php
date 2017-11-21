@@ -14,7 +14,6 @@ class PropertyTree {
 	const PROP_VARS = 'vars'; // twig property to reference vars set in the meta property
 	const PROP_ASCEND = 'parent'; // twig pseudo property to ascend up one level in the property chain
 	const PROP_DEFAULT = 'default'; // config property to provide user defaults
-	const PROP_NAME = 'name'; // config property corresponding to key for assoc arrays that contain only assoc arrays
 	const PROP_CHAIN = 'prop'; // twig property to get the property chain
 
 	protected $twig;
