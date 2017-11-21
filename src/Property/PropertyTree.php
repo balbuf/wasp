@@ -64,6 +64,22 @@ class PropertyTree {
 	}
 
 	/**
+	 * Check whether a value exists in the raw config tree.
+	 * @return bool whether the property chain has a value set
+	 */
+	public function existsRaw() {
+		return static::existsInTree($this->configRaw, static::unnestArray(func_get_args()));
+	}
+
+	/**
+	 * Check whether a value is exists in the processed config tree.
+	 * @return bool whether the property chain has a value set
+	 */
+	public function exists() {
+		return static::existsInTree($this->config, static::unnestArray(func_get_args()));
+	}
+
+	/**
 	 * Process a property value, rendering twig templates.
 	 * @param  mixed $value raw value
 	 * @param  array $chain property chain leading up to this value for context
@@ -352,6 +368,23 @@ class PropertyTree {
 			}
 		}
 		return $value;
+	}
+
+	/**
+	 * Check whether a value exists at the provided chain.
+	 * @param  array  $tree  multidimensional array
+	 * @param  array  $chain property chain
+	 * @return bool        whether a value exists at the given property chain
+	 */
+	public static function existsInTree(array $tree, array $chain = []) {
+		foreach ($chain as $key) {
+			if (is_array($tree) && array_key_exists($key, $tree)) {
+				$tree = $tree[$key];
+			} else {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
