@@ -15,6 +15,7 @@ class PropertyTree {
 	const PROP_ASCEND = 'parent'; // twig pseudo property to ascend up one level in the property chain
 	const PROP_DEFAULT = 'default'; // config property to provide user defaults
 	const PROP_CHAIN = 'prop'; // twig property to get the property chain
+	const PROP_ENV = 'env'; // twig property to
 
 	protected $twig;
 	protected $configRaw = []; // raw config as entered
@@ -89,6 +90,7 @@ class PropertyTree {
 		// store the chains we are currently processing to detect circular references
 		static $processing = [];
 		static $circularReference = null;
+		static $env = null;
 		$serializedChain = serialize($chain);
 		// check for circular references
 		if (isset($processing[$serializedChain])) {
@@ -98,6 +100,11 @@ class PropertyTree {
 			return $value;
 		}
 		$processing[$serializedChain] = true;
+		// environment object that will be shared across a template and the templates of any referenced propertes
+		// so they can communicate with each other
+		if (!isset($env)) {
+			$env = new PropertyEnv();
+		}
 
 		// recursively process contents of array
 		if (is_array($value)) {
@@ -113,6 +120,7 @@ class PropertyTree {
 			$value = $this->getTwig()->createTemplate($value)->render([
 				static::PROP_SIBLINGS => new PropertyChain($this, $siblingChain, static::PROP_ASCEND),
 				static::PROP_CHAIN => $reverseChain,
+				static::PROP_ENV => $env,
 			] + $this->createGlobalContext());
 
 			// look for a user-defined default property, by replacing this prop's parent's name with "default"
@@ -122,7 +130,10 @@ class PropertyTree {
 			// does a user value exist? if so, check to see if it is self-referential
 			if (is_string($userDefault = $this->getUserDefault($userDefaultChain))) {
 				// starting twig context
-				$context = $this->createGlobalContext() + [static::PROP_CHAIN => $reverseChain];
+				$context = $this->createGlobalContext() + [
+					static::PROP_CHAIN => $reverseChain,
+					static::PROP_ENV => $env,
+				];
 
 				// is siblings prop named something different than self prop?
 				if (static::PROP_SIBLINGS !== static::PROP_SELF) {
@@ -155,6 +166,7 @@ class PropertyTree {
 				throw new RuntimeException('Circular reference in config property: ' . implode('.', $circularReference));
 			}
 			$circularReference = null;
+			$env = null;
 		}
 
 		return $value;
