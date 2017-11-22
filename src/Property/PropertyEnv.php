@@ -3,7 +3,7 @@
 namespace OomphInc\WASP\Property;
 
 /**
- * Simple object used to set and retrive values while processing twig templates.
+ * Simple object used to set and retrieve values while processing twig templates.
  */
 class PropertyEnv {
 
