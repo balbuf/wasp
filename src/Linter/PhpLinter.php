@@ -2,6 +2,8 @@
 
 namespace OomphInc\WASP\Linter;
 
+use RuntimeException;
+
 class PhpLinter implements LinterInterface {
 
 	public function lint($code) {

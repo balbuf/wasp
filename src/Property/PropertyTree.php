@@ -15,7 +15,8 @@ class PropertyTree {
 	const PROP_ASCEND = 'parent'; // twig pseudo property to ascend up one level in the property chain
 	const PROP_DEFAULT = 'default'; // config property to provide user defaults
 	const PROP_CHAIN = 'prop'; // twig property to get the property chain
-	const PROP_ENV = 'env'; // twig property to
+	const PROP_ENV = 'env'; // twig property to share values between referenced templates
+	const PROP_OUTPUT = 'output'; // twig property used to override the rendered output
 
 	protected $twig;
 	protected $configRaw = []; // raw config as entered
@@ -100,7 +101,7 @@ class PropertyTree {
 			return $value;
 		}
 		$processing[$serializedChain] = true;
-		// environment object that will be shared across a template and the templates of any referenced propertes
+		// environment object that will be shared across a template and the templates of any referenced properties
 		// so they can communicate with each other
 		if (!isset($env)) {
 			$env = new PropertyEnv();
@@ -121,7 +122,12 @@ class PropertyTree {
 				static::PROP_SIBLINGS => new PropertyChain($this, $siblingChain, static::PROP_ASCEND),
 				static::PROP_CHAIN => $reverseChain,
 				static::PROP_ENV => $env,
+				static::PROP_OUTPUT => $output = new PropertyOutput(),
 			] + $this->createGlobalContext());
+			// did the template override its value?
+			if ($output->isOverridden()) {
+				$value = $output->getValue();
+			}
 
 			// look for a user-defined default property, by replacing this prop's parent's name with "default"
 			$userDefaultChain = $chain;
@@ -133,6 +139,7 @@ class PropertyTree {
 				$context = $this->createGlobalContext() + [
 					static::PROP_CHAIN => $reverseChain,
 					static::PROP_ENV => $env,
+					static::PROP_OUTPUT => $output = new PropertyOutput(),
 				];
 
 				// is siblings prop named something different than self prop?
@@ -151,8 +158,12 @@ class PropertyTree {
 
 				// did we reference ourself?
 				if (in_array($siblingChain, $context[static::PROP_SELF]->getHistory(), true)) {
-					// use this value
-					$value = $newValue;
+					// did the template override its value?
+					if ($output->isOverridden()) {
+						$value = $output->getValue();
+					} else {
+						$value = $newValue;
+					}
 				}
 			}
 		}
