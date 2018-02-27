@@ -14,7 +14,7 @@ abstract class FileSystemHelper {
 	 */
 	public static function flattenFileArray($files, $dir = null) {
 		$out = [];
-		$dir = $dir ? rtrim($dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR : '';
+		$dir = $dir ? static::trailingSlash($dir) : '';
 		foreach ($files as $file) {
 			if (is_string($file)) {
 				$out[] = $dir . $file;
@@ -52,6 +52,15 @@ abstract class FileSystemHelper {
 	 */
 	public static function getDirParts($path) {
 		return array_diff(explode(DIRECTORY_SEPARATOR, $path), ['', '.']);
+	}
+
+	/**
+	 * Add a trailing slash to the path, if there isn't one.
+	 * @param  string $path path, with or without trailing slash
+	 * @return string       path with trailing slash
+	 */
+	public static function trailingSlash($path) {
+		return rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 	}
 
 }

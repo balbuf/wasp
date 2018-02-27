@@ -56,7 +56,7 @@ class FileSystem implements FileSystemInterface {
 	 * @inheritDoc
 	 */
 	public function readFile($path) {
-		$file = file_get_contents($this->resolvePath($path));
+		$file = @file_get_contents($this->resolvePath($path));
 		if ($file === false) {
 			throw new RuntimeException("Could not read file '$path'");
 		}
@@ -67,7 +67,7 @@ class FileSystem implements FileSystemInterface {
 	 * @inheritDoc
 	 */
 	public function writeFile($path, $contents) {
-		if (file_put_contents($this->resolvePath($path), $contents) === false) {
+		if (@file_put_contents($this->resolvePath($path), $contents) === false) {
 			throw new RuntimeException("Could not write to file '$path'");
 		}
 	}
@@ -95,7 +95,7 @@ class FileSystem implements FileSystemInterface {
 			if (isset($e) || !rmdir($path)) {
 				throw new RuntimeException("Could not delete dir '$origPath'");
 			}
-		} else if (!unlink($path)) {
+		} else if (!@unlink($path)) {
 			throw new RuntimeException("Could not delete file '$origPath'");
 		}
 	}

@@ -310,7 +310,7 @@ class PropertyTree {
 			} else if (is_string($item)) {
 				$test = new PropertyChain($this);
 				$test->setShortCircuitValue([], '');
-				$this->getTwig()->createTemplate($item)->render([static::PROP_SELF => $test]);
+				$this->getTwig()->createTemplate($item)->render([static::PROP_SELF => $test, 'test' => true]);
 				// was "this" accessed?
 				if (in_array([], $test->getHistory(), true)) {
 					unset($value[$key]);
