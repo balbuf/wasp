@@ -215,7 +215,7 @@ respectively.
 
 ### Recipes
 
-The advanced config using twig can be a little complicated, so here are some example "recipes" to help illustrate
+The advanced config using Twig can be a little complicated, so here are some example "recipes" to help illustrate
 the potential and allow you to get the most out of your config file with the least amount of work.
 
 #### Conditional Prefix
