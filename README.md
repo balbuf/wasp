@@ -120,12 +120,12 @@ The `wasp` top-level property contains information about the project and control
 
 ## Advanced Config
 
-Wasp uses [twig](https://twig.symfony.com/doc/1.x/) to process its config values, allowing the user to reference
-other properties within the config and perform some basic value processing via twig's filters, functions, etc.
-In order to use twig in your config property values, you must enclose some or all of the value in twig template
+Wasp uses [Twig](https://twig.symfony.com/doc/1.x/) to process its config values, allowing the user to reference
+other properties within the config and perform some basic value processing via Twig's filters, functions, etc.
+In order to use Twig in your config property values, you must enclose some or all of the value in Twig template
 delimeters: `{{ }}` for expressions and `{% %}` for more complex control structures (loops, logic, etc.).
-(Note that when a property value starts with a twig template, the value must be quoted, otherwise the YAML
-parser will get confused and interprety the value as an inline object, e.g. `property: '{{ template }}'` instead
+(Note that when a property value starts with a Twig template, the value must be quoted, otherwise the YAML
+parser will get confused and interpret the value as an inline object, e.g. `property: '{{ template }}'` instead
 of the invalid `property: {{ template }}`.)
 
 ### Special Variables
@@ -141,7 +141,7 @@ values, the current property chain, etc.
 | `prop` | an array of the current property chain, with the current property being index 0 and working backwards |
 | `env` | a simple object with a `set()` method (which sets public properties that can then be accessed directly) that is shared amongst a property value template and any referenced property value templates, allowing communication with each other during value resolution; for example, calling `env.set('foo', 'bar')` allows accessing the value `bar` via `env.foo` |
 
-Because twig is meant to be a templating engine which ultimately produces strings, special handling is necessary to
+Because Twig is meant to be a templating engine which ultimately produces strings, special handling is necessary to
 produce a non-string value for a property. An additional variable called `output` is provided which has a `setValue()`
 method to override the resolved value of the property template, e.g. `{% do output.setValue(["this", "produces", "an", "array"]) %}`.
 Similarly, the special `this`, `top`, and `vars` variables return strings for other property values by default.
