@@ -37,12 +37,13 @@ class SetupFile implements CompilableInterface {
 		$options += [
 			'hook' => null,
 			'lazy' => false,
+			'use' => [],
 		];
 		$prop = $options['lazy'] ? 'lazy' : 'regular';
 
 		// place expression inside of a hook
 		if ($hook = $options['hook']) {
-			$priority = isset($options['priority']) ? $options['priority'] : 10;
+			$priority = isset($options['priority']) ? (string) $options['priority'] : '10';
 			$index = serialize([$hook, $priority]);
 			// create a container for the given hook and priority
 			if (!isset($this->$prop->expressions[$index])) {
@@ -52,8 +53,12 @@ class SetupFile implements CompilableInterface {
 				]);
 			}
 			$this->$prop->expressions[$index]->expressions[] = $expression;
+			// add any "use" values
+			if (count($options['use'])) {
+				$this->$prop->expressions[$index]->use = array_merge($this->$prop->expressions[$index]->use, $options['use']);
+			}
 		} else {
-			$priority = isset($options['priority']) ? $options['priority'] : 100;
+			$priority = isset($options['priority']) ? (string) $options['priority'] : '100';
 			// create a container for bare expressions
 			if (!isset($this->$prop->expressions['bare'])) {
 				// make sure bare expressions come first

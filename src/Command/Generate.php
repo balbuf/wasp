@@ -16,6 +16,7 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 use OomphInc\WASP\Event\Events;
 use RuntimeException;
 use OomphInc\WASP\Wasp;
+use OomphInc\WASP\Handler\WaspHandler;
 
 class Generate extends Command {
 
@@ -66,6 +67,8 @@ class Generate extends Command {
 			}
 		}
 		$transformer->setVar('rootDir', $rootDir);
+
+		$transformer->setHandler(new WaspHandler());
 
 		// fire off event to register transform handlers
 		$event = new GenericEvent();
