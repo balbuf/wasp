@@ -11,22 +11,26 @@ use OomphInc\WASP\Event\Events;
 use OomphInc\WASP\Event\ValueEvent;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use RuntimeException;
+use InvalidArgumentException;
+use OomphInc\WASP\Handler\HandlerInterface;
 
 class YamlTransformer {
 
 	protected $yamlString;
-	protected $yaml;
 	protected $handlers = [];
+	protected $defaultsCallables = [];
 	protected $classes = [];
 	protected $vars = [];
 	protected $dispatcher;
 	protected $logger;
+	protected $propertyTree;
 	public $outputExpression;
 
 	/**
 	 * @param string $yaml_string contents of YAML configuration
 	 */
-	public function __construct($yamlString, $dispatcher, $logger) {
+	public function __construct($yamlString, $dispatcher, $logger, $propertyTree) {
+		$this->propertyTree = $propertyTree;
 		$this->setYaml($yamlString);
 		$this->dispatcher = $dispatcher;
 		$this->logger = $logger;
@@ -45,10 +49,11 @@ class YamlTransformer {
 	public function setYaml($yamlString) {
 		$this->yamlString = $yamlString;
 		// try to parse the string (will throw an exception on parse error, caught by the application)
-		$this->yaml = Yaml::parse($yamlString);
-		if (!is_array($this->yaml)) {
+		$yaml = Yaml::parse($yamlString);
+		if (!is_array($yaml)) {
 			throw new RuntimeException('Invalid YAML file');
 		}
+		$this->propertyTree->set($yaml);
 	}
 
 	/**
@@ -56,9 +61,34 @@ class YamlTransformer {
 	 * @param string   $property   property to handle
 	 * @param string   $identifier unique identifier for this handler
 	 * @param callable $handler    the handler that will be invoked when the property is encountered
+	 * @param callable [$defaults]   callable that provides default values when executed
 	 */
-	public function setHandler($property, $identifier, callable $handler) {
+	public function setHandler($property, $identifier = null, callable $handler = null, callable $defaults = null) {
+		// allow a HandlerInterface object as the only arg
+		if ($property instanceof HandlerInterface) {
+			$handler = $property;
+			foreach ((array) $handler->getSubscribedProperties() as $property) {
+				$this->setHandler($property, $handler->getIdentifier($property), [$handler, 'handle'], [$handler, 'getDefaults']);
+			}
+			return;
+		}
+
+		if (!is_string($property)) {
+			throw new InvalidArgumentException('Handler property must be a string!');
+		}
+
+		if (!is_string($identifier)) {
+			throw new InvalidArgumentException('Handler identifier must be a string!');
+		}
+
+		if (!is_callable($handler)) {
+			throw new InvalidArgumentException('Not a valid callable for handler!');
+		}
+
 		$this->handlers[$property][$identifier] = $handler;
+		if (is_callable($defaults)) {
+			$this->defaultsCallables[$property][$identifier] = $defaults;
+		}
 	}
 
 	/**
@@ -68,20 +98,7 @@ class YamlTransformer {
 	 */
 	public function removeHandler($property, $identifier) {
 		unset($this->handlers[$property][$identifier]);
-	}
-
-	/**
-	 * Set handlers based on the public methods of the given class.
-	 * Each method should be named after the top-level property it will handle.
-	 * @param  string|object  $class     class name (for static methods) or instantiated object (for non static)
-	 * @param  string  $prefix           prefix for the handler identifier
-	 * @param  boolean $convertFromCamel whether to convert the method names from camelCase to snake_case
-	 */
-	public function importHandlersFromClass($class, $prefix, $convertFromCamel = true) {
-		foreach (get_class_methods($class) as $method) {
-			$handler = $convertFromCamel ? strtolower(preg_replace('/[A-Z]/', '_$0', $method)) : $method;
-			$this->setHandler($handler, $prefix . $handler, [$class, $method]);
-		}
+		unset($this->defaultsCallables[$property][$identifier]);
 	}
 
 	/**
@@ -119,28 +136,20 @@ class YamlTransformer {
 
 	/**
 	 * Get the parsed YAML config for the given property chain, if set.
+	 * This is a convenience wrapper around the PropertyTree::get method.
 	 * @param  string [$property...] property name
 	 * @return mixed            config value, if set
 	 */
 	public function getProperty() {
-		$value = $this->yaml;
-		foreach (func_get_args() as $key) {
-			if (is_array($value) && isset($value[$key])) {
-				$value = $value[$key];
-			} else {
-				return;
-			}
-		}
-		return $value;
+		return $this->propertyTree->get(func_get_args());
 	}
 
 	/**
-	 * Set the value for a top-level property within the YAML config.
-	 * @param string $property property name
-	 * @param mixed  $value    data
+	 * Get the property tree object.
+	 * @return PropertyTree      property tree object
 	 */
-	public function setProperty($property, $value) {
-		$this->yaml[$property] = $value;
+	public function getPropertyTree() {
+		return $this->propertyTree;
 	}
 
 	/**
@@ -190,15 +199,30 @@ class YamlTransformer {
 	public function execute(array $disabledHandlers = []) {
 		$this->dispatcher->dispatch(Events::PRE_TRANSFORM);
 
-		foreach ($this->yaml as $property => $data) {
-			if (isset($this->handlers[$property])) {
+		// only iterate on top-level properties that were explicitly set
+		foreach (array_keys($this->propertyTree->getRaw()) as $property) {
+			// do we have any handlers?
+			if (!empty($this->handlers[$property])) {
+				// process handler defaults
+				if (!empty($this->defaultsCallables[$property])) {
+					foreach ($this->defaultsCallables[$property] as $identifier => $callable) {
+						// are we skipping this handler?
+						if (in_array($identifier, $disabledHandlers, true)) {
+							continue;
+						}
+						$this->propertyTree->setDefault($identifier, $property, call_user_func($callable, $property));
+					}
+				}
+
+				// execute each handler
 				foreach ($this->handlers[$property] as $identifier => $handler) {
+					// skip handler?
 					if (in_array($identifier, $disabledHandlers, true)) {
 						$this->logger->info("Skipping handler '$identifier'");
 						continue;
 					}
 					$this->logger->info("Executing handler '$identifier'");
-					call_user_func($handler, $this, $data, $property);
+					call_user_func($handler, $this, $this->propertyTree->get($property), $property);
 				}
 			} else {
 				$this->logger->notice("No handlers for property '$property'");
