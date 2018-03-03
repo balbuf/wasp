@@ -57,37 +57,12 @@ class YamlTransformer {
 	}
 
 	/**
-	 * Add a transform handler for a given top-level YAML property.
-	 * @param string   $property   property to handle
-	 * @param string   $identifier unique identifier for this handler
-	 * @param callable $handler    the handler that will be invoked when the property is encountered
-	 * @param callable [$defaults]   callable that provides default values when executed
+	 * Add a transform handler.
+	 * @param HandlerInterface  $handler   handler object
 	 */
-	public function setHandler($property, $identifier = null, callable $handler = null, callable $defaults = null) {
-		// allow a HandlerInterface object as the only arg
-		if ($property instanceof HandlerInterface) {
-			$handler = $property;
-			foreach ((array) $handler->getSubscribedProperties() as $property) {
-				$this->setHandler($property, $handler->getIdentifier($property), [$handler, 'handle'], [$handler, 'getDefaults']);
-			}
-			return;
-		}
-
-		if (!is_string($property)) {
-			throw new InvalidArgumentException('Handler property must be a string!');
-		}
-
-		if (!is_string($identifier)) {
-			throw new InvalidArgumentException('Handler identifier must be a string!');
-		}
-
-		if (!is_callable($handler)) {
-			throw new InvalidArgumentException('Not a valid callable for handler!');
-		}
-
-		$this->handlers[$property][$identifier] = $handler;
-		if (is_callable($defaults)) {
-			$this->defaultsCallables[$property][$identifier] = $defaults;
+	public function setHandler(HandlerInterface $handler) {
+		foreach ((array) $handler->getSubscribedProperties() as $property) {
+			$this->handlers[$property][$handler->getIdentifier($property)] = $handler;
 		}
 	}
 
@@ -98,7 +73,6 @@ class YamlTransformer {
 	 */
 	public function removeHandler($property, $identifier) {
 		unset($this->handlers[$property][$identifier]);
-		unset($this->defaultsCallables[$property][$identifier]);
 	}
 
 	/**
@@ -202,30 +176,29 @@ class YamlTransformer {
 		// only iterate on top-level properties that were explicitly set
 		foreach (array_keys($this->propertyTree->getRaw()) as $property) {
 			// do we have any handlers?
-			if (!empty($this->handlers[$property])) {
-				// process handler defaults
-				if (!empty($this->defaultsCallables[$property])) {
-					foreach ($this->defaultsCallables[$property] as $identifier => $callable) {
-						// are we skipping this handler?
-						if (in_array($identifier, $disabledHandlers, true)) {
-							continue;
-						}
-						$this->propertyTree->setDefault($identifier, $property, call_user_func($callable, $property));
-					}
-				}
-
-				// execute each handler
-				foreach ($this->handlers[$property] as $identifier => $handler) {
-					// skip handler?
-					if (in_array($identifier, $disabledHandlers, true)) {
-						$this->logger->info("Skipping handler '$identifier'");
-						continue;
-					}
-					$this->logger->info("Executing handler '$identifier'");
-					call_user_func($handler, $this, $this->propertyTree->get($property), $property);
-				}
-			} else {
+			if (empty($this->handlers[$property])) {
 				$this->logger->notice("No handlers for property '$property'");
+				continue;
+			}
+
+			// process all handler defaults first
+			foreach ($this->handlers[$property] as $identifier => $handler) {
+				// are we skipping this handler?
+				if (in_array($identifier, $disabledHandlers, true)) {
+					continue;
+				}
+				$this->propertyTree->setDefault($identifier, $property, $handler->getDefaults($property));
+			}
+
+			// execute each handler
+			foreach ($this->handlers[$property] as $identifier => $handler) {
+				// skip handler?
+				if (in_array($identifier, $disabledHandlers, true)) {
+					$this->logger->info("Skipping handler '$identifier'");
+					continue;
+				}
+				$this->logger->info("Executing handler '$identifier'");
+				$handler->handle($this, $this->propertyTree->get($property), $property);
 			}
 		}
 
