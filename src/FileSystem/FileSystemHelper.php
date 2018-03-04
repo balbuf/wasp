@@ -63,4 +63,19 @@ abstract class FileSystemHelper {
 		return rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 	}
 
+	/**
+	 * Join two or more path components.
+	 * @param  string $path... path component
+	 * @return string joined paths
+	 */
+	public static function join() {
+		$parts = [];
+		foreach (func_get_args() as $i => $part) {
+			// trim each component based on its position
+			$func = $i === 0 ? 'rtrim' : ($i === func_num_args() - 1 ? 'ltrim' : 'trim');
+			$parts[] = $func($part, DIRECTORY_SEPARATOR);
+		}
+		return implode(DIRECTORY_SEPARATOR, $parts);
+	}
+
 }

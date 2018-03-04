@@ -3,6 +3,10 @@
 namespace OomphInc\WASP\FileSystem;
 
 use RuntimeException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use DirectoryIterator;
+
 
 class FileSystem implements FileSystemInterface {
 
@@ -26,7 +30,7 @@ class FileSystem implements FileSystemInterface {
 
 		// is the path relative?
 		if (!preg_match(sprintf('#^%1$s|[a-z]+:%1$s{1,2}#i', preg_quote(DIRECTORY_SEPARATOR)), $path)) {
-			$path = $this->getCwd() . DIRECTORY_SEPARATOR . $path;
+			$path = FileSystemHelper::join($this->getCwd(), $path);
 		}
 
 		return is_readable($path) ? realpath($path) : $path;
@@ -35,13 +39,54 @@ class FileSystem implements FileSystemInterface {
 	/**
 	 * @inheritDoc
 	 */
-	public function getFiles($pattern, $relative = true) {
-		$cwd = $this->getCwd();
+	public function getFiles($pattern = null, $flags = FileSystemInterface::RECURSIVE | FileSystemInterface::RELATIVE) {
+		$cwd = FileSystemHelper::trailingSlash($this->getCwd());
+		$cwdLen = strlen($cwd);
+		$isRelative = (bool) ($flags & FileSystemInterface::RELATIVE);
 		$files = [];
-		foreach (glob($cwd . DIRECTORY_SEPARATOR . $pattern, GLOB_BRACE) as $file) {
-			// strip off the files root path
-			$files[] = $relative ? preg_replace('#^' . preg_quote(rtrim($cwd, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR, '#') . '#', '', $file) : $file;
+
+		if ($flags & FileSystemInterface::RECURSIVE) {
+			$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($cwd));
+		} else {
+			$iterator = new DirectoryIterator($cwd);
 		}
+
+		foreach ($iterator as $file) {
+			// skip '.' and '..'
+			if ($iterator->isDot()) {
+				continue;
+			}
+
+			// do we want only files or dirs? check based on the realpath to include symlinks that point to the respective types
+			if ($flags & FileSystemInterface::ONLY_FILES && !is_file($file->getRealPath())) {
+				continue;
+			}
+			if ($flags & FileSystemInterface::ONLY_DIRS && !is_dir($file->getRealPath())) {
+				continue;
+			}
+
+			// convert the file object to just the filename
+			$file = (string) $file;
+
+			if ($pattern !== null && !preg_match($pattern, $file)) {
+				continue;
+			}
+
+			// add file, adding or removing the cwd path as necessary
+			if (substr($file, 0, $cwdLen) === $cwd) {
+				if ($isRelative) {
+					// strip off leading path
+					$file = substr($file, $cwdLen);
+				}
+			} else {
+				if (!$isRelative) {
+					// add leading path
+					$file = FileSystemHelper::join($cwd, $file);
+				}
+			}
+			$files[] = $file;
+		}
+
 		return $files;
 	}
 

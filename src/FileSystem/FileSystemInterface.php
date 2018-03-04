@@ -4,6 +4,12 @@ namespace OomphInc\WASP\FileSystem;
 
 interface FileSystemInterface {
 
+	// flags for getFiles()
+	const RECURSIVE = 1;
+	const RELATIVE = 2;
+	const ONLY_FILES = 4;
+	const ONLY_DIRS = 8;
+
 	/**
 	 * Set the current working directory, which relative paths are based off of.
 	 * @param string $cwd path
@@ -43,11 +49,11 @@ interface FileSystemInterface {
 
 	/**
 	 * Get a list of files matching the pattern, relative to the current working directory.
-	 * @param  string $pattern  file glob pattern, relative to cwd
-	 * @param  bool   $relative return paths relative to cwd
+	 * @param  string $pattern  file regex pattern or null to return all
+	 * @param  int   $flags  optional flags that control search
 	 * @return array           matching paths
 	 */
-	public function getFiles($pattern, $relative = true);
+	public function getFiles($pattern, $flags);
 
 	/**
 	 * Read the contents of the file at the given path.
