@@ -8,7 +8,7 @@ class TranslatableTextExpression extends BaseCompilable {
 
 	public function compile() {
 		$compiled = $this->transformer->compile((string) $this->text);
-		if ($domain = $this->transformer->getProperty('text_domain')) {
+		if ($domain = $this->transformer->getProperty('localization', 'text_domain')) {
 			$compiled = '__( ' . $compiled . ', ' . $this->transformer->compile($domain) . ' )';
 		}
 		return $compiled;
