@@ -24,16 +24,18 @@ class YamlTransformer {
 	protected $dispatcher;
 	protected $logger;
 	protected $propertyTree;
+	protected $docBlockFinder;
 	public $outputExpression;
 
 	/**
 	 * @param string $yaml_string contents of YAML configuration
 	 */
-	public function __construct($yamlString, $dispatcher, $logger, $propertyTree) {
+	public function __construct($yamlString, $dispatcher, $logger, $propertyTree, $docBlockFinder) {
 		$this->propertyTree = $propertyTree;
 		$this->setYaml($yamlString);
 		$this->dispatcher = $dispatcher;
 		$this->logger = $logger;
+		$this->docBlockFinder = $docBlockFinder;
 
 		$event = new GenericEvent();
 		$event->setArgument('transformer', $this);
@@ -188,6 +190,25 @@ class YamlTransformer {
 					continue;
 				}
 				$this->propertyTree->setDefault($identifier, $property, $handler->getDefaults($property));
+			}
+
+			$docBlockPattern = $this->propertyTree->get('wasp', 'docblock_match_files');
+			if ($docBlockPattern !== false) {
+				foreach ($this->handlers[$property] as $identifier => $handler) {
+					// is this disabled? does it accept doc blocks?
+					if (in_array($identifier, $disabledHandlers, true) || !($handler instanceof DocBlockConsumerInterface)) {
+						continue;
+					}
+
+					// set up the finder, only once
+					if (!$this->docBlockFinder->hasSearched()) {
+						// create docblock finder
+						$this->docBlockFinder->setFilePattern($docBlockPattern);
+						$this->docBlockFinder->execute();
+					}
+
+					$handler->handleDocBlocks($this->docBlockFinder, $this->propertyTree);
+				}
 			}
 
 			// execute each handler

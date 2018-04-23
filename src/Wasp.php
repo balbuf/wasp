@@ -11,6 +11,10 @@ use Symfony\Component\Console\Input\InputDefinition;
 use OomphInc\WASP\Input\PartialInputDefinition;
 use Symfony\Component\Console\ConsoleEvents;
 use OomphInc\WASP\Event\Events;
+use OomphInc\WASP\DocBlock\DocBlockFinder;
+use PhpParser\ParserFactory;
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
 use Closure;
 use Twig_Environment;
 use Twig_Loader_Array;
@@ -113,13 +117,35 @@ class Wasp {
 				return new Linter\PhpLinter();
 			},
 			'transformer' => function() {
-				return new YamlTransformer($this->getServiceVar('yaml'), $this->getService('dispatcher'), $this->getService('logger'), $this->getService('propertyTree'));
+				return new YamlTransformer(
+					$this->getServiceVar('yaml'),
+					$this->getService('dispatcher'),
+					$this->getService('logger'),
+					$this->getService('propertyTree'),
+					$this->getService('docBlockFinder')
+				);
 			},
 			'propertyTree' => function() {
 				return new Property\PropertyTree($this->getService('twig'));
 			},
 			'twig' => function() {
 				return new Twig_Environment(new Twig_Loader_Array(), ['autoescape' => false]);
+			},
+			'docBlockFinder' => function() {
+				return new DocBlockFinder(
+					$this->getService('filesystem'),
+					$this->getService('logger'),
+					$this->getService('phpParser'),
+					$this->getService('phpNodeTraverser')
+				);
+			},
+			'phpParser' => function() {
+				return (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
+			},
+			'phpNodeTraverser' => function() {
+				$traverser = new NodeTraverser();
+				$traverser->addVisitor(new NameResolver);
+				return $traverser;
 			},
 		];
 	}

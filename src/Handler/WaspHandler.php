@@ -31,6 +31,8 @@ class WaspHandler implements HandlerInterface {
 		return [
 			'url_context' => 'theme',
 			'dir' => '',
+			'docblock_match_files' => '/\.php$/i',
+			'disabled_handlers' => [],
 		];
 	}
 
@@ -43,7 +45,7 @@ class WaspHandler implements HandlerInterface {
 		// use the context to construct a base url
 		switch ($context) {
 			case 'theme':
-				$base = "get_stylesheet_directory_uri() . DIRECTORY_SEPARATOR";
+				$base = 'get_stylesheet_directory_uri() . DIRECTORY_SEPARATOR';
 				break;
 
 			case 'plugin':
@@ -52,7 +54,7 @@ class WaspHandler implements HandlerInterface {
 				if ($depth = count(FileSystemHelper::getDirParts($config['dir']))) {
 					$base = str_repeat('dirname( ', $depth) . $base . str_repeat(' )', $depth);
 				}
-				$base .= " . DIRECTORY_SEPARATOR";
+				$base .= ' . DIRECTORY_SEPARATOR';
 				break;
 
 			default:

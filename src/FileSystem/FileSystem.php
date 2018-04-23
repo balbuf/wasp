@@ -42,7 +42,6 @@ class FileSystem implements FileSystemInterface {
 	public function getFiles($pattern = null, $flags = FileSystemInterface::RECURSIVE | FileSystemInterface::RELATIVE) {
 		$cwd = FileSystemHelper::trailingSlash($this->getCwd());
 		$cwdLen = strlen($cwd);
-		$isRelative = (bool) ($flags & FileSystemInterface::RELATIVE);
 		$files = [];
 
 		if ($flags & FileSystemInterface::RECURSIVE) {
@@ -68,23 +67,17 @@ class FileSystem implements FileSystemInterface {
 			// convert the file object to just the filename
 			$file = (string) $file;
 
+			// strip leading path for the purposes of pattern matching
+			if (substr($file, 0, $cwdLen) === $cwd) {
+				$file = substr($file, $cwdLen);
+			}
+
 			if ($pattern !== null && !preg_match($pattern, $file)) {
 				continue;
 			}
 
-			// add file, adding or removing the cwd path as necessary
-			if (substr($file, 0, $cwdLen) === $cwd) {
-				if ($isRelative) {
-					// strip off leading path
-					$file = substr($file, $cwdLen);
-				}
-			} else {
-				if (!$isRelative) {
-					// add leading path
-					$file = FileSystemHelper::join($cwd, $file);
-				}
-			}
-			$files[] = $file;
+			// add file, adding back the leading path as necessary
+			$files[] = $flags & FileSystemInterface::RELATIVE ? $file : FileSystemHelper::join($cwd, $file);
 		}
 
 		return $files;
