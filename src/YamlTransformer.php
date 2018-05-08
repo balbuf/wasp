@@ -13,6 +13,7 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 use RuntimeException;
 use InvalidArgumentException;
 use OomphInc\WASP\Handler\HandlerInterface;
+use OomphInc\WASP\Property\PropertyManipulatorInterface;
 
 class YamlTransformer {
 
@@ -175,40 +176,47 @@ class YamlTransformer {
 	public function execute(array $disabledHandlers = []) {
 		$this->dispatcher->dispatch(Events::PRE_TRANSFORM);
 
+		// set defaults for all active handlers
+		foreach ($this->handlers as $property => $handlers) {
+			foreach ($handlers as $identifier => $handler) {
+				// are we skipping this handler?
+				if (in_array($identifier, $disabledHandlers, true)) {
+					continue;
+				}
+
+				$this->propertyTree->setDefault($identifier, $property, $handler->getDefaults($property));
+			}
+		}
+
+		$docBlockPattern = $this->propertyTree->get('wasp', 'docblock_match_files');
+
+		// execute any handlers that are property manipulators
+		foreach ($this->handlers as $property => $handlers) {
+			foreach ($handlers as $identifier => $handler) {
+				// are we skipping this handler? is it a property manipulator?
+				if (in_array($identifier, $disabledHandlers, true) || !($handler instanceof PropertyManipulatorInterface)) {
+					continue;
+				}
+
+				// set up the finder, only once
+				/* disabled - for now
+				if ($docBlockPattern !== false && !$this->docBlockFinder->hasSearched()) {
+					// create docblock finder
+					$this->docBlockFinder->setFilePattern($docBlockPattern);
+					$this->docBlockFinder->execute();
+				}
+				*/
+
+				$handler->manipulateProperties($this->propertyTree, $this->docBlockFinder);
+			}
+		}
+
 		// only iterate on top-level properties that were explicitly set
 		foreach (array_keys($this->propertyTree->getRaw()) as $property) {
 			// do we have any handlers?
 			if (empty($this->handlers[$property])) {
 				$this->logger->notice("No handlers for property '$property'");
 				continue;
-			}
-
-			// process all handler defaults first
-			foreach ($this->handlers[$property] as $identifier => $handler) {
-				// are we skipping this handler?
-				if (in_array($identifier, $disabledHandlers, true)) {
-					continue;
-				}
-				$this->propertyTree->setDefault($identifier, $property, $handler->getDefaults($property));
-			}
-
-			$docBlockPattern = $this->propertyTree->get('wasp', 'docblock_match_files');
-			if ($docBlockPattern !== false) {
-				foreach ($this->handlers[$property] as $identifier => $handler) {
-					// is this disabled? does it accept doc blocks?
-					if (in_array($identifier, $disabledHandlers, true) || !($handler instanceof DocBlockConsumerInterface)) {
-						continue;
-					}
-
-					// set up the finder, only once
-					if (!$this->docBlockFinder->hasSearched()) {
-						// create docblock finder
-						$this->docBlockFinder->setFilePattern($docBlockPattern);
-						$this->docBlockFinder->execute();
-					}
-
-					$handler->handleDocBlocks($this->docBlockFinder, $this->propertyTree);
-				}
 			}
 
 			// execute each handler

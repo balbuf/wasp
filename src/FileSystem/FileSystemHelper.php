@@ -12,7 +12,7 @@ abstract class FileSystemHelper {
 	 * @param  string [$dir]   starting dir
 	 * @return array         flatten array with resolved file names
 	 */
-	public static function flattenFileArray($files, $dir = null) {
+	public static function flattenFileArray(array $files, $dir = null) {
 		$out = [];
 		$dir = $dir ? static::trailingSlash($dir) : '';
 		foreach ($files as $file) {

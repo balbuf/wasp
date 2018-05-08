@@ -8,13 +8,15 @@ class FunctionDeclaration extends BaseCompilable {
 	public $args = []; // either arg names in an array, or a compilable
 	public $use = []; // variable names to import from outer scope
 	public $expressions = [];
+	public $methodModifiers;
 
 	public function compile() {
-		$declaration = 'function ' . ($this->name ? $this->name : '') . '(';
+		$declaration = ($this->methodModifiers ? $this->methodModifiers . ' ' : '')
+			. 'function ' . ($this->name ? $this->name : '') . '(';
 
 		// add arguments
 		if (is_array($this->args) && count($this->args)) {
-			$declaration = ' ' . implode(', ', preg_replace('/^[^$].+$/', '$$0', $this->args)) . ' ';
+			$declaration .= ' ' . implode(', ', preg_replace('/^[^$].+$/', '$$0', $this->args)) . ' ';
 		} else if ($this->args instanceof CompilableInterface) {
 			$declaration .= $this->args->compile();
 		}

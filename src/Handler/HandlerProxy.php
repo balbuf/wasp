@@ -3,17 +3,19 @@
 namespace OomphInc\WASP\Handler;
 
 use RuntimeException;
+use OomphInc\WASP\Property\PropertyManipulatorInterface;
 
 /**
  * Handler proxy allows a plugin to register many HandlerInterface objects
  * that will only be instantiated if its respective property needs to be handled.
  */
-class HandlerProxy implements HandlerInterface {
+class HandlerProxy implements HandlerInterface, PropertyManipulatorInterface {
 
 	protected $classes = [];
 	protected $handlers = [];
 	protected $wasp;
 	protected $prefix;
+	protected $hasManipulated = false;
 
 	public function __construct($wasp, $prefix) {
 		$this->wasp = $wasp;
@@ -80,6 +82,26 @@ class HandlerProxy implements HandlerInterface {
 	 */
 	public function handle($transformer, $config, $property) {
 		$this->getHandler($property)->handle($transformer, $config, $property);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function manipulateProperties($propertyTree, $docBlockFinder) {
+		// make sure we only run the manipulators once
+		if ($this->hasManipulated) {
+			return false;
+		}
+
+		foreach ($this->classes as $property => $class) {
+			if (!in_array('OomphInc\WASP\Property\PropertyManipulatorInterface', class_implements($class))) {
+				continue;
+			}
+
+			$this->getHandler($property)->manipulateProperties($propertyTree, $docBlockFinder);
+		}
+
+		$this->hasManipulated = true;
 	}
 
 }
