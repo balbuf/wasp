@@ -6,15 +6,24 @@ text_domain: WASP
 
 post_types:
   events:
-    labels:
-      singular_name: Event
+    register:
+      label: Events
     taxonomies:
       - custom_tax1
       - custom_tax2
-
   jobs:
-    labels:
-      singular_name: Job
+    register:
+      label: Jobs
+
+taxonomies:
+  industry:
+    register:
+      label: Industries
+      labels:
+        singular_name: Industry
+  type:
+    register:
+      label: Types
 
 image_sizes:
   hero:
