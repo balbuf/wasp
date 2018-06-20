@@ -38,6 +38,7 @@ class SetupFile implements CompilableInterface {
 			'hook' => null,
 			'lazy' => false,
 			'use' => [],
+			'args' => [],
 		];
 		$prop = $options['lazy'] ? 'lazy' : 'regular';
 
@@ -56,6 +57,10 @@ class SetupFile implements CompilableInterface {
 			// add any "use" values
 			if (count($options['use'])) {
 				$this->$prop->expressions[$index]->use = array_merge($this->$prop->expressions[$index]->use, $options['use']);
+			}
+			// set the args values, if we are asking for more than what we had previously
+			if (count($options['args']) > count($this->$prop->expressions[$index]->args)) {
+				$this->$prop->expressions[$index]->args = $options['args'];
 			}
 		} else {
 			$priority = isset($options['priority']) ? (string) $options['priority'] : '100';
