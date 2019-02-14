@@ -1,6 +1,6 @@
 {
 	"name": "oomphinc/wasp",
-	"description": "Composer script to create declarative PHP for WordPress from a YAML file",
+	"description": "Write simple YAML to produce working WordPress code!",
 	"homepage": "https://www.oomphinc.com/",
 	"license": "MIT",
 	"authors": [
