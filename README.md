@@ -19,7 +19,7 @@ to commit!
 The preferred way to install wasp is via [Composer](https://getcomposer.org/):
 
 ```sh
-$ composer require oomphinc/wasp --dev
+$ composer require balbuf/wasp --dev
 ```
 
 Wasp will now be available in composer's ["bin dir"](https://getcomposer.org/doc/articles/vendor-binaries.md), which is located in `vendor/bin` by default.
@@ -31,10 +31,10 @@ $ vendor/bin/wasp
 
 Wasp doesn't come with any handlers out of the box, so that you can leverage only the features you want and nothing more.
 In order to get started, you'll need to install one or more wasp plugins that contain handlers.
-All of the essential handlers for basic WordPress configuration can be found in [oomphinc/wasp-core](https://github.com/oomphinc/wasp-core):
+All of the essential handlers for basic WordPress configuration can be found in [balbuf/wasp-core](https://github.com/balbuf/wasp-core):
 
 ```sh
-$ composer require oomphinc/wasp-core --dev
+$ composer require balbuf/wasp-core --dev
 ```
 
 ## Creating a Config YAML File
