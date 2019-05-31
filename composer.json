@@ -1,7 +1,6 @@
 {
-	"name": "oomphinc/wasp",
+	"name": "balbuf/wasp",
 	"description": "Write simple YAML to produce working WordPress code!",
-	"homepage": "https://www.oomphinc.com/",
 	"license": "MIT",
 	"authors": [
 		{

@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4ffaea83b01e79b8171a4eb632dbbae8",
+    "content-hash": "b80d02a8b950d66418578ab706e7b65e",
     "packages": [
         {
             "name": "nikic/php-parser",
